@@ -14,7 +14,7 @@ export default function App() {
       <View style={styles.container}>
 
         {/* Title */}
-        <Text style={styles.title}>Welcome to My App</Text>
+        <Text style={styles.title}>Welcome to Recurly</Text>
 
         <Text style={styles.subtitle}>
           Sign in to continue or create an account
@@ -55,20 +55,22 @@ export default function App() {
             </Text>
           </Pressable>
         </Link>
-
+        {/* Netflix Subscription */}
+        <Link href="/subscription/netflix" asChild>
+          <Pressable style={styles.subscriptionButton}>
+            <Text style={styles.subscriptionButtonText}>
+              Netflix Subscription
+            </Text>
+          </Pressable>
+        </Link>
         {/* Dynamic Subscription */}
         <Link
           href={{
             pathname: "/subscription/[id]",
-            params: { id: "123" },
+            params: { id: "1" },
           }}
           asChild
         >
-          <Pressable style={styles.subscriptionButton}>
-            <Text style={styles.subscriptionButtonText}>
-              Subscription 123
-            </Text>
-          </Pressable>
         </Link>
 
       </View>
