@@ -1,14 +1,312 @@
-import { View, Text } from 'react-native'
-import React from 'react'
-import { Link } from 'expo-router';
+import "@/global.css";
 
-const SignIn = () => {
+import React, { useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+
+// Cross-platform alert: Alert.alert() does not show a dialog on React Native Web,
+// so on web we fall back to window.alert().
+const showAlert = (title: string, message: string) => {
+  if (Platform.OS === "web") {
+    window.alert(`${title}\n\n${message}`);
+  } else {
+    Alert.alert(title, message);
+  }
+};
+
+export default function SignIn() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSignIn = () => {
+    console.log("Sign In pressed", { email, password });
+
+    if (!email.trim()) {
+      showAlert("Required", "Please enter your email.");
+      return;
+    }
+
+    if (!password.trim()) {
+      showAlert("Required", "Please enter your password.");
+      return;
+    }
+
+    if (!email.includes("@")) {
+      showAlert("Invalid Email", "Please enter a valid email address.");
+      return;
+    }
+
+    console.log("Validation passed, navigating...");
+
+    // Login successful
+    router.replace("/(auth)/(tabs)");
+  };
+
   return (
-    <View>
-      <Text>sign-in</Text>
-      <Link href="/(auth)/sign-up">Sign </Link>
-    </View>
-  )
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={styles.container}>
+
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <Ionicons name="card-outline" size={42} color="#14B8A6" />
+            </View>
+
+            <Text style={styles.title}>Welcome Back</Text>
+
+            <Text style={styles.subtitle}>
+              Sign in to continue to Recurly
+            </Text>
+          </View>
+
+          {/* Email */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Email</Text>
+
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="mail-outline"
+                size={21}
+                color="#64748B"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                placeholderTextColor="#94A3B8"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+          </View>
+
+          {/* Password */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+
+            <View style={styles.inputWrapper}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={21}
+                color="#64748B"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your password"
+                placeholderTextColor="#94A3B8"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+
+              <Pressable
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={
+                    showPassword
+                      ? "eye-outline"
+                      : "eye-off-outline"
+                  }
+                  size={21}
+                  color="#64748B"
+                />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Forgot Password */}
+          <Pressable
+            style={styles.forgotButton}
+            onPress={() =>
+              showAlert(
+                "Forgot Password",
+                "Password reset functionality can be connected to your API."
+              )
+            }
+          >
+            <Text style={styles.forgotText}>
+              Forgot Password?
+            </Text>
+          </Pressable>
+
+          {/* Sign In */}
+          <Pressable
+            style={styles.button}
+            onPress={handleSignIn}
+          >
+            <Text style={styles.buttonText}>
+              Sign In
+            </Text>
+
+            <Ionicons
+              name="arrow-forward"
+              size={20}
+              color="#FFFFFF"
+            />
+          </Pressable>
+
+          {/* Sign Up */}
+          <View style={styles.signupContainer}>
+            <Text style={styles.accountText}>
+              Don't have an account?
+            </Text>
+
+            <Pressable
+              onPress={() =>
+                router.push("/(auth)/sign-up")
+              }
+            >
+              <Text style={styles.signupText}>
+                Sign Up
+              </Text>
+            </Pressable>
+          </View>
+
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 }
 
-export default SignIn;
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#F8FAFC",
+  },
+
+  keyboardView: {
+    flex: 1,
+  },
+
+  container: {
+    flex: 1,
+    paddingHorizontal: 24,
+    justifyContent: "center",
+  },
+
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 35,
+  },
+
+  logoCircle: {
+    width: 82,
+    height: 82,
+    borderRadius: 41,
+    backgroundColor: "#CCFBF1",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 18,
+  },
+
+  title: {
+    fontSize: 30,
+    fontWeight: "700",
+    color: "#0F172A",
+    marginBottom: 8,
+  },
+
+  subtitle: {
+    fontSize: 15,
+    color: "#64748B",
+    textAlign: "center",
+  },
+
+  inputContainer: {
+    marginBottom: 18,
+  },
+
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#334155",
+    marginBottom: 8,
+  },
+
+  inputWrapper: {
+    height: 54,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#CBD5E1",
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+  },
+
+  input: {
+    flex: 1,
+    fontSize: 15,
+    color: "#0F172A",
+    marginLeft: 10,
+  },
+
+  forgotButton: {
+    alignSelf: "flex-end",
+    marginBottom: 22,
+  },
+
+  forgotText: {
+    color: "#0F766E",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  button: {
+    height: 55,
+    backgroundColor: "#14B8A6",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 10,
+  },
+
+  buttonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  signupContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+  },
+
+  accountText: {
+    color: "#64748B",
+    fontSize: 14,
+  },
+
+  signupText: {
+    color: "#0F766E",
+    fontSize: 14,
+    fontWeight: "700",
+    marginLeft: 5,
+  },
+});

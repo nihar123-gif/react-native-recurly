@@ -35,9 +35,7 @@ export default function App() {
             isWeb && styles.webContainer,
           ]}
         >
-          {/* =====================================
-              LOGO
-          ====================================== */}
+          {/* LOGO */}
           <View style={styles.logoOuter}>
             <View style={styles.logoInner}>
               <Ionicons
@@ -48,9 +46,7 @@ export default function App() {
             </View>
           </View>
 
-          {/* =====================================
-              TITLE
-          ====================================== */}
+          {/* TITLE */}
           <Text style={styles.title}>
             Welcome to Recurly
           </Text>
@@ -59,13 +55,10 @@ export default function App() {
             Manage all your subscriptions in one place
           </Text>
 
-          {/* =====================================
-              AUTH BUTTONS
-          ====================================== */}
-
+          {/* AUTH BUTTONS */}
           <View style={styles.buttonGroup}>
 
-            {/* Onboarding */}
+            {/* GET STARTED */}
             <Pressable
               onPress={() => router.push("/onboarding")}
               style={({ pressed }) => [
@@ -98,7 +91,7 @@ export default function App() {
               />
             </Pressable>
 
-            {/* Sign In */}
+            {/* SIGN IN */}
             <Pressable
               onPress={() => router.push("/(auth)/sign-in")}
               style={({ pressed }) => [
@@ -131,7 +124,7 @@ export default function App() {
               />
             </Pressable>
 
-            {/* Sign Up */}
+            {/* CREATE ACCOUNT */}
             <Pressable
               onPress={() => router.push("/(auth)/sign-up")}
               style={({ pressed }) => [
@@ -163,13 +156,9 @@ export default function App() {
                 color="#64748B"
               />
             </Pressable>
-
           </View>
 
-          {/* =====================================
-              SUBSCRIPTIONS HEADER
-          ====================================== */}
-
+          {/* SUBSCRIPTIONS HEADER */}
           <View style={styles.sectionHeader}>
             <View style={styles.sectionIcon}>
               <Ionicons
@@ -190,10 +179,7 @@ export default function App() {
             </View>
           </View>
 
-          {/* =====================================
-              SPOTIFY
-          ====================================== */}
-
+          {/* SPOTIFY */}
           <Pressable
             onPress={() =>
               router.push("/subscription/spotify")
@@ -230,10 +216,7 @@ export default function App() {
             </View>
           </Pressable>
 
-          {/* =====================================
-              NETFLIX
-          ====================================== */}
-
+          {/* NETFLIX */}
           <Pressable
             onPress={() =>
               router.push("/subscription/netflix")
@@ -270,10 +253,7 @@ export default function App() {
             </View>
           </Pressable>
 
-          {/* =====================================
-              DYNAMIC SUBSCRIPTION
-          ====================================== */}
-
+          {/* SUBSCRIPTION DETAILS */}
           <Pressable
             onPress={() =>
               router.push({
@@ -315,10 +295,7 @@ export default function App() {
             </View>
           </Pressable>
 
-          {/* =====================================
-              FOOTER
-          ====================================== */}
-
+          {/* FOOTER */}
           <View style={styles.footer}>
             <Ionicons
               name="shield-checkmark-outline"
@@ -330,22 +307,13 @@ export default function App() {
               Secure subscription management
             </Text>
           </View>
-
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/* =====================================================
-   STYLES
-===================================================== */
-
 const styles = StyleSheet.create({
-  /* =====================================
-     SCREEN
-  ====================================== */
-
   safeArea: {
     flex: 1,
     backgroundColor: "#0B1220",
@@ -372,25 +340,15 @@ const styles = StyleSheet.create({
     paddingTop: 45,
   },
 
-  /* =====================================
-     LOGO
-  ====================================== */
-
   logoOuter: {
     alignSelf: "center",
-
     width: 92,
     height: 92,
-
     borderRadius: 28,
-
     backgroundColor: "#102A2B",
-
     alignItems: "center",
     justifyContent: "center",
-
     marginBottom: 22,
-
     borderWidth: 1,
     borderColor: "#164E4A",
   },
@@ -398,73 +356,43 @@ const styles = StyleSheet.create({
   logoInner: {
     width: 68,
     height: 68,
-
     borderRadius: 21,
-
     backgroundColor: "#123C3A",
-
     alignItems: "center",
     justifyContent: "center",
   },
 
-  /* =====================================
-     TITLE
-  ====================================== */
-
   title: {
     fontSize: 30,
     fontWeight: "800",
-
     color: "#FFFFFF",
-
     textAlign: "center",
-
     letterSpacing: -0.5,
-
     marginBottom: 8,
   },
 
   subtitle: {
     fontSize: 15,
-
     color: "#94A3B8",
-
     textAlign: "center",
-
     lineHeight: 22,
-
     marginBottom: 30,
-
     paddingHorizontal: 20,
   },
-
-  /* =====================================
-     BUTTON GROUP
-  ====================================== */
 
   buttonGroup: {
     width: "100%",
   },
 
-  /* =====================================
-     PRIMARY BUTTON
-  ====================================== */
-
   primaryButton: {
     width: "100%",
     minHeight: 68,
-
     backgroundColor: "#14B8A6",
-
     borderRadius: 18,
-
     paddingHorizontal: 16,
-
     flexDirection: "row",
     alignItems: "center",
-
     marginBottom: 12,
-
     shadowColor: "#14B8A6",
     shadowOffset: {
       width: 0,
@@ -472,18 +400,14 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 12,
-
     elevation: 5,
   },
 
   buttonIconPrimary: {
     width: 44,
     height: 44,
-
     borderRadius: 14,
-
     backgroundColor: "rgba(255,255,255,0.16)",
-
     alignItems: "center",
     justifyContent: "center",
   },
@@ -491,85 +415,58 @@ const styles = StyleSheet.create({
   primaryButtonTitle: {
     fontSize: 16,
     fontWeight: "700",
-
     color: "#FFFFFF",
-
     marginBottom: 3,
   },
 
   primaryButtonSubtitle: {
     fontSize: 12,
-
     color: "#D9FFFA",
   },
-
-  /* =====================================
-     SECONDARY BUTTON
-  ====================================== */
 
   secondaryButton: {
     width: "100%",
     minHeight: 68,
-
     backgroundColor: "#111C2E",
-
     borderRadius: 18,
-
     borderWidth: 1,
     borderColor: "#263449",
-
     paddingHorizontal: 16,
-
     flexDirection: "row",
     alignItems: "center",
-
     marginBottom: 12,
   },
 
   buttonIcon: {
     width: 44,
     height: 44,
-
     borderRadius: 14,
-
     backgroundColor: "#102A2B",
-
     alignItems: "center",
     justifyContent: "center",
   },
 
   buttonTextContainer: {
     flex: 1,
-
     marginLeft: 13,
   },
 
   buttonTitle: {
     fontSize: 15,
-
     fontWeight: "700",
-
     color: "#F8FAFC",
-
     marginBottom: 3,
   },
 
   buttonSubtitle: {
     fontSize: 12,
-
     color: "#64748B",
   },
 
-  /* =====================================
-     SECTION
-  ====================================== */
-
   sectionHeader: {
     width: "100%",
-
     flexDirection: "row",
     alignItems: "center",
-
     marginTop: 18,
     marginBottom: 12,
   },
@@ -577,113 +474,77 @@ const styles = StyleSheet.create({
   sectionIcon: {
     width: 40,
     height: 40,
-
     borderRadius: 13,
-
     backgroundColor: "#102A2B",
-
     alignItems: "center",
     justifyContent: "center",
-
     marginRight: 11,
   },
 
   sectionTitle: {
     fontSize: 17,
-
     fontWeight: "700",
-
     color: "#F8FAFC",
   },
 
   sectionSubtitle: {
     fontSize: 12,
-
     color: "#64748B",
-
     marginTop: 2,
   },
 
-  /* =====================================
-     SUBSCRIPTION CARD
-  ====================================== */
-
   subscriptionCard: {
     width: "100%",
-
     minHeight: 82,
-
     backgroundColor: "#111C2E",
-
     borderRadius: 20,
-
     borderWidth: 1,
     borderColor: "#263449",
-
     paddingHorizontal: 14,
-
     flexDirection: "row",
     alignItems: "center",
-
     marginBottom: 12,
   },
 
   subscriptionIcon: {
     width: 52,
     height: 52,
-
     borderRadius: 16,
-
     backgroundColor: "#102A2B",
-
     borderWidth: 1,
     borderColor: "#164E4A",
-
     alignItems: "center",
     justifyContent: "center",
   },
 
   subscriptionInfo: {
     flex: 1,
-
     marginLeft: 14,
   },
 
   subscriptionTitle: {
     fontSize: 16,
-
     fontWeight: "700",
-
     color: "#F8FAFC",
-
     marginBottom: 4,
   },
 
   subscriptionDescription: {
     fontSize: 12,
-
     color: "#64748B",
   },
 
   arrowContainer: {
     width: 34,
     height: 34,
-
     borderRadius: 11,
-
     backgroundColor: "#172235",
-
     alignItems: "center",
     justifyContent: "center",
   },
 
-  /* =====================================
-     PRESS EFFECT
-  ====================================== */
-
   pressedButton: {
     opacity: 0.72,
-
     transform: [
       {
         scale: 0.985,
@@ -691,23 +552,16 @@ const styles = StyleSheet.create({
     ],
   },
 
-  /* =====================================
-     FOOTER
-  ====================================== */
-
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-
     marginTop: 18,
-
     gap: 7,
   },
 
   footerText: {
     fontSize: 12,
-
     color: "#64748B",
   },
 });
