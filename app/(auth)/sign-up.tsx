@@ -17,6 +17,8 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 
+import { createUser } from "@/lib/auth";
+
 // Cross-platform alert: Alert.alert() does not show a dialog on React Native Web,
 // so on web we fall back to window.alert() and manually run the onPress callback.
 const showAlert = (
@@ -49,8 +51,12 @@ export default function SignUp() {
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
 
-  const handleSignUp = () => {
-    console.log("Create Account pressed", { name, email, password, confirmPassword });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSignUp = async () => {
+    if (isSubmitting) {
+      return;
+    }
 
     if (!name.trim()) {
       showAlert("Required", "Please enter your name.");
@@ -94,20 +100,32 @@ export default function SignUp() {
       return;
     }
 
-    console.log("Validation passed, account created");
+    setIsSubmitting(true);
 
-    // Registration successful
-    showAlert(
-      "Success",
-      "Your account has been created.",
-      [
-        {
-          text: "Continue",
-          onPress: () =>
-            router.replace("/(auth)/sign-in"),
-        },
-      ]
-    );
+    try {
+      await createUser({ name, email, password });
+
+      showAlert(
+        "Success",
+        "Your account has been created.",
+        [
+          {
+            text: "Continue",
+            onPress: () =>
+              router.replace("/(auth)/sign-in"),
+          },
+        ]
+      );
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to create your account right now.";
+
+      showAlert("Account Creation Failed", message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -301,11 +319,12 @@ export default function SignUp() {
 
             {/* Create Account */}
             <Pressable
-              style={styles.button}
+              style={[styles.button, isSubmitting && styles.buttonDisabled]}
               onPress={handleSignUp}
+              disabled={isSubmitting}
             >
               <Text style={styles.buttonText}>
-                Create Account
+                {isSubmitting ? "Creating Account..." : "Create Account"}
               </Text>
 
               <Ionicons
@@ -322,11 +341,10 @@ export default function SignUp() {
               </Text>
 
               <Pressable
-                onPress={() =>
-                  router.push(
-                    "/(auth)/sign-in"
-                  )
-                }
+                onPress={() => {
+                  router.dismissAll();
+                  router.replace("/(auth)/sign-in");
+                }}
               >
                 <Text style={styles.signinText}>
                   Sign In
@@ -439,6 +457,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 10,
     marginTop: 8,
+  },
+
+  buttonDisabled: {
+    opacity: 0.7,
   },
 
   buttonText: {

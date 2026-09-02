@@ -16,8 +16,8 @@ import {
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 
-// Cross-platform alert: Alert.alert() does not show a dialog on React Native Web,
-// so on web we fall back to window.alert().
+import { signInUser } from "@/lib/auth";
+
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === "web") {
     window.alert(`${title}\n\n${message}`);
@@ -32,9 +32,12 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSignIn = () => {
-    console.log("Sign In pressed", { email, password });
+  const handleSignIn = async () => {
+    if (isSubmitting) {
+      return;
+    }
 
     if (!email.trim()) {
       showAlert("Required", "Please enter your email.");
@@ -51,10 +54,21 @@ export default function SignIn() {
       return;
     }
 
-    console.log("Validation passed, navigating...");
+    setIsSubmitting(true);
 
-    // Login successful
-    router.replace("/(auth)/(tabs)");
+    try {
+      await signInUser({ email, password });
+      router.replace("/(auth)/(tabs)");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to sign in right now. Please try again.";
+
+      showAlert("Sign In Failed", message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -64,30 +78,20 @@ export default function SignIn() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.container}>
-
-          {/* Logo */}
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
               <Ionicons name="card-outline" size={42} color="#14B8A6" />
             </View>
 
             <Text style={styles.title}>Welcome Back</Text>
-
-            <Text style={styles.subtitle}>
-              Sign in to continue to Recurly
-            </Text>
+            <Text style={styles.subtitle}>Sign in to continue to Recurly</Text>
           </View>
 
-          {/* Email */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Email</Text>
 
             <View style={styles.inputWrapper}>
-              <Ionicons
-                name="mail-outline"
-                size={21}
-                color="#64748B"
-              />
+              <Ionicons name="mail-outline" size={21} color="#64748B" />
 
               <TextInput
                 style={styles.input}
@@ -101,16 +105,11 @@ export default function SignIn() {
             </View>
           </View>
 
-          {/* Password */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
 
             <View style={styles.inputWrapper}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={21}
-                color="#64748B"
-              />
+              <Ionicons name="lock-closed-outline" size={21} color="#64748B" />
 
               <TextInput
                 style={styles.input}
@@ -121,15 +120,9 @@ export default function SignIn() {
                 secureTextEntry={!showPassword}
               />
 
-              <Pressable
-                onPress={() => setShowPassword(!showPassword)}
-              >
+              <Pressable onPress={() => setShowPassword(!showPassword)}>
                 <Ionicons
-                  name={
-                    showPassword
-                      ? "eye-outline"
-                      : "eye-off-outline"
-                  }
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
                   size={21}
                   color="#64748B"
                 />
@@ -137,7 +130,6 @@ export default function SignIn() {
             </View>
           </View>
 
-          {/* Forgot Password */}
           <Pressable
             style={styles.forgotButton}
             onPress={() =>
@@ -147,44 +139,31 @@ export default function SignIn() {
               )
             }
           >
-            <Text style={styles.forgotText}>
-              Forgot Password?
-            </Text>
+            <Text style={styles.forgotText}>Forgot Password?</Text>
           </Pressable>
 
-          {/* Sign In */}
           <Pressable
-            style={styles.button}
+            style={[styles.button, isSubmitting && styles.buttonDisabled]}
             onPress={handleSignIn}
+            disabled={isSubmitting}
           >
             <Text style={styles.buttonText}>
-              Sign In
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </Text>
 
-            <Ionicons
-              name="arrow-forward"
-              size={20}
-              color="#FFFFFF"
-            />
+            <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
           </Pressable>
 
-          {/* Sign Up */}
           <View style={styles.signupContainer}>
-            <Text style={styles.accountText}>
-              Don't have an account?
-            </Text>
+            <Text style={styles.accountText}>Do not have an account?</Text>
 
-            <Pressable
-              onPress={() =>
-                router.push("/(auth)/sign-up")
-              }
-            >
-              <Text style={styles.signupText}>
-                Sign Up
-              </Text>
+            <Pressable onPress={() => {
+              router.dismissAll();
+              router.replace("/(auth)/sign-up");
+            }}>
+              <Text style={styles.signupText}>Sign Up</Text>
             </Pressable>
           </View>
-
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -283,6 +262,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     flexDirection: "row",
     gap: 10,
+  },
+
+  buttonDisabled: {
+    opacity: 0.7,
   },
 
   buttonText: {

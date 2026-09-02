@@ -2,17 +2,17 @@ import "@/global.css";
 
 import React from "react";
 import {
+  Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
-  View,
-  Pressable,
-  ScrollView,
   useWindowDimensions,
+  View,
 } from "react-native";
 
-import { useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
 
 export default function App() {
   const router = useRouter();
@@ -182,7 +182,10 @@ export default function App() {
           {/* SPOTIFY */}
           <Pressable
             onPress={() =>
-              router.push("/subscription/spotify")
+              router.push({
+                pathname: "/(auth)/(tabs)/subscription/[id]",
+                params: { id: "spotify" },
+              })
             }
             style={({ pressed }) => [
               styles.subscriptionCard,
@@ -219,7 +222,10 @@ export default function App() {
           {/* NETFLIX */}
           <Pressable
             onPress={() =>
-              router.push("/subscription/netflix")
+              router.push({
+                pathname: "/(auth)/(tabs)/subscription/[id]",
+                params: { id: "netflix" },
+              })
             }
             style={({ pressed }) => [
               styles.subscriptionCard,
@@ -257,7 +263,7 @@ export default function App() {
           <Pressable
             onPress={() =>
               router.push({
-                pathname: "/subscription/[id]",
+                pathname: "/(auth)/(tabs)/subscription/[id]",
                 params: {
                   id: "1",
                 },
