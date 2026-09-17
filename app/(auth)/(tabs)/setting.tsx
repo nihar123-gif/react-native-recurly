@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
 
+import AppBackground from "@/components/ui/AppBackground";
+import { getSession, signOut } from "@/lib/auth";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 
-import { getSession, signOut } from "@/lib/auth";
-
-const Setting = () => {
+export default function Setting() {
   const router = useRouter();
-  const [session, setSession] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [session, setSession] = useState<{
+    id: string;
+    name: string;
+    email: string;
+  } | null>(null);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -25,91 +30,104 @@ const Setting = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Setting</Text>
-      <Text style={styles.subtitle}>App settings</Text>
+    <AppBackground>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <View style={styles.headerRow}>
+            <Pressable style={styles.backButton} onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+            </Pressable>
+            <Text style={styles.headerTitle}>System Settings</Text>
+            <View style={{ width: 44 }} />
+          </View>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Signed in as</Text>
-        <Text style={styles.name}>{session?.name ?? "No user"}</Text>
-        <Text style={styles.email}>{session?.email ?? "Not signed in"}</Text>
-      </View>
+          <View style={styles.card}>
+            <Text style={styles.label}>AUTHENTICATED MEMBER</Text>
+            <Text style={styles.name}>{session?.name ?? "User Member"}</Text>
+            <Text style={styles.email}>
+              {session?.email ?? "subscriber@recurly.app"}
+            </Text>
+          </View>
 
-      <Pressable style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Log Out</Text>
-      </Pressable>
-    </View>
+          <Pressable style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={18} color="#FB7185" />
+            <Text style={styles.logoutButtonText}>Sign Out</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </AppBackground>
   );
-};
+}
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "transparent",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
     padding: 24,
-    paddingTop: 40,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#64748B",
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 24,
   },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    borderWidth: 1,
+    borderColor: "#1E2533",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#FFFFFF",
+  },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
+    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
+    borderColor: "#1E2533",
     marginBottom: 20,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748B",
-    textTransform: "uppercase",
+    fontWeight: "900",
     letterSpacing: 0.8,
     marginBottom: 8,
   },
   name: {
     fontSize: 20,
-    fontWeight: "700",
-    color: "#0F172A",
+    fontWeight: "800",
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   email: {
     fontSize: 14,
-    color: "#475569",
+    color: "#94A3B8",
   },
-  secondaryButton: {
-    backgroundColor: "#E2F8F4",
-    borderRadius: 12,
-    paddingVertical: 14,
+  logoutButton: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    gap: 8,
+    backgroundColor: "rgba(28, 17, 23, 0.85)",
+    borderWidth: 1,
+    borderColor: "#3D1A28",
+    borderRadius: 16,
+    height: 52,
   },
-  secondaryButtonText: {
-    color: "#0F766E",
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  button: {
-    backgroundColor: "#14B8A6",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
+  logoutButtonText: {
+    color: "#FB7185",
+    fontSize: 15,
+    fontWeight: "800",
   },
 });
-
-export default Setting;

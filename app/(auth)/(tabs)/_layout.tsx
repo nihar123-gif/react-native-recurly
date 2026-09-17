@@ -1,39 +1,57 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
-import Icon from "@/components/ui/Icon";
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#14B8A6",
+        tabBarActiveTintColor: "#10B981",
         tabBarInactiveTintColor: "#64748B",
         tabBarStyle: {
-          backgroundColor: "#0B1220",
-          borderTopColor: "#263449",
+          backgroundColor: "#05070B",
+          borderTopColor: "#161D2A",
           borderTopWidth: 1,
-          height: 65,
+          height: 68,
           paddingTop: 10,
-          paddingBottom: 8,
+          paddingBottom: 10,
+          elevation: 12,
+          shadowColor: "#000000",
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.5,
+          shadowRadius: 14,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "600",
-          marginTop: 6,
+          fontSize: 11,
+          fontWeight: "800",
+          marginTop: 4,
+          letterSpacing: 0.2,
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => (
+          title: "Dashboard",
+          tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name="home"
-              size={size}
+              name={focused ? "home" : "home-outline"}
+              size={22}
               color={color}
-              style={{ width: 28, height: 28 }}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="subscription/index"
+        options={{
+          title: "Plans",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? "layers" : "layers-outline"}
+              size={22}
+              color={color}
             />
           ),
         }}
@@ -42,28 +60,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="insight"
         options={{
-          title: "Insight",
-          tabBarIcon: ({ color, size }) => (
+          title: "Analytics",
+          tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name="analytics"
-              size={size}
+              name={focused ? "pie-chart" : "pie-chart-outline"}
+              size={22}
               color={color}
-              style={{ width: 28, height: 28 }}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="setting"
-        options={{
-          title: "Setting",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              name="settings"
-              size={size}
-              color={color}
-              style={{ width: 28, height: 28 }}
             />
           ),
         }}
@@ -73,39 +75,37 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, focused }) => (
             <Ionicons
-              name="person"
-              size={size}
+              name={focused ? "person" : "person-outline"}
+              size={22}
               color={color}
-              style={{ width: 28, height: 28 }}
             />
           ),
+        }}
+      />
+
+      {/* Dynamic or auxiliary screens hidden from bottom tabs */}
+      <Tabs.Screen
+        name="subscription/[id]"
+        options={{
+          href: null,
+          title: "Details",
         }}
       />
 
       <Tabs.Screen
         name="subscription"
         options={{
-          title: "Subscription",
-          tabBarIcon: ({ color, size }) => (
-            <Icon name="subscription" size={size} color={color} />
-          ),
+          href: null,
         }}
       />
 
       <Tabs.Screen
-        name="subscription/[id]"
+        name="setting"
         options={{
-          title: "Sub Details",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons
-              name="information-circle"
-              size={size}
-              color={color}
-              style={{ width: 28, height: 28 }}
-            />
-          ),
+          href: null,
+          title: "Settings",
         }}
       />
     </Tabs>

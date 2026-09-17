@@ -8,11 +8,21 @@ export type StoredUser = {
   createdAt: string;
 };
 
-const USERS_KEY = "recurly_users";
-const SESSION_KEY = "recurly_session";
+const USERS_KEY = "users";
+const CURRENT_USER_KEY = "currentUser";
+const LEGACY_USERS_KEY = "recurly_users";
+const LEGACY_SESSION_KEY = "recurly_session";
 
 export const getStoredUsers = async (): Promise<StoredUser[]> => {
-  const value = await AsyncStorage.getItem(USERS_KEY);
+  let value = await AsyncStorage.getItem(USERS_KEY);
+
+  if (!value) {
+    value = await AsyncStorage.getItem(LEGACY_USERS_KEY);
+
+    if (value) {
+      await AsyncStorage.setItem(USERS_KEY, value);
+    }
+  }
 
   if (!value) {
     return [];
@@ -57,6 +67,15 @@ export const createUser = async (input: {
   users.push(nextUser);
   await saveStoredUsers(users);
 
+  await AsyncStorage.setItem(
+    CURRENT_USER_KEY,
+    JSON.stringify({
+      id: nextUser.id,
+      name: nextUser.name,
+      email: nextUser.email,
+    }),
+  );
+
   return nextUser;
 };
 
@@ -77,7 +96,7 @@ export const signInUser = async (input: { email: string; password: string }) => 
   }
 
   await AsyncStorage.setItem(
-    SESSION_KEY,
+    CURRENT_USER_KEY,
     JSON.stringify({
       id: user.id,
       name: user.name,
@@ -89,7 +108,15 @@ export const signInUser = async (input: { email: string; password: string }) => 
 };
 
 export const getSession = async () => {
-  const value = await AsyncStorage.getItem(SESSION_KEY);
+  let value = await AsyncStorage.getItem(CURRENT_USER_KEY);
+
+  if (!value) {
+    value = await AsyncStorage.getItem(LEGACY_SESSION_KEY);
+
+    if (value) {
+      await AsyncStorage.setItem(CURRENT_USER_KEY, value);
+    }
+  }
 
   if (!value) {
     return null;
@@ -103,5 +130,5 @@ export const getSession = async () => {
 };
 
 export const signOut = async () => {
-  await AsyncStorage.removeItem(SESSION_KEY);
+  await AsyncStorage.removeItem(CURRENT_USER_KEY);
 };

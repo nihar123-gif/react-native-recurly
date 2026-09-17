@@ -1,22 +1,53 @@
-import React, { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  Alert,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
-import { useRouter } from "expo-router";
-
+import AppBackground from "@/components/ui/AppBackground";
 import { getSession, signOut } from "@/lib/auth";
+import {
+  getMetrics,
+  getSubscriptions,
+  resetSubscriptionsToDefault,
+  Subscription,
+} from "@/lib/subscriptions";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useFocusEffect, useRouter } from "expo-router";
 
-const Profile = () => {
+export default function ProfileScreen() {
   const router = useRouter();
-  const [session, setSession] = useState<{ id: string; name: string; email: string } | null>(null);
+  const { width } = useWindowDimensions();
+  const isWeb = width > 768;
 
-  useEffect(() => {
-    const loadSession = async () => {
-      const currentSession = await getSession();
-      setSession(currentSession);
-    };
+  const [session, setSession] = useState<{
+    id: string;
+    name: string;
+    email: string;
+  } | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
-    loadSession();
+  const loadProfile = useCallback(async () => {
+    const currentSession = await getSession();
+    setSession(currentSession);
+    const subs = await getSubscriptions();
+    setSubscriptions(subs);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [loadProfile])
+  );
+
+  const metrics = getMetrics(subscriptions);
 
   const handleLogout = async () => {
     await signOut();
@@ -24,128 +55,373 @@ const Profile = () => {
     router.replace("/(auth)/sign-in");
   };
 
+  const handleResetData = async () => {
+    const doReset = async () => {
+      await resetSubscriptionsToDefault();
+      const updated = await getSubscriptions();
+      setSubscriptions(updated);
+      if (Platform.OS === "web") {
+        window.alert("Sample subscriptions restored successfully.");
+      } else {
+        Alert.alert("Success", "Sample subscriptions restored successfully.");
+      }
+    };
+
+    if (Platform.OS === "web") {
+      if (
+        window.confirm(
+          "Reset all subscriptions back to the realistic default sample pack?"
+        )
+      ) {
+        doReset();
+      }
+    } else {
+      Alert.alert(
+        "Reset Subscriptions",
+        "Restore all subscriptions back to the default sample pack?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Reset", style: "destructive", onPress: doReset },
+        ]
+      );
+    }
+  };
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.headerCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{session?.name?.charAt(0)?.toUpperCase() ?? "U"}</Text>
-        </View>
+    <AppBackground>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            isWeb && styles.webScrollContent,
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.container, isWeb && styles.webContainer]}>
+            {/* HEADER */}
+            <View style={styles.header}>
+              <Text style={styles.headerEyebrow}>ACCOUNT OVERVIEW</Text>
+              <Text style={styles.headerTitle}>Profile & System</Text>
+            </View>
 
-        <Text style={styles.title}>{session?.name ?? "User Profile"}</Text>
-        <Text style={styles.subtitle}>{session?.email ?? "Not signed in"}</Text>
-      </View>
+            {/* USER AVATAR & IDENTITY */}
+            <View style={styles.userCard}>
+              <View style={styles.avatarRing}>
+                <View style={styles.avatarInner}>
+                  <Text style={styles.avatarText}>
+                    {session?.name ? session.name.charAt(0).toUpperCase() : "U"}
+                  </Text>
+                </View>
+              </View>
 
-      <View style={styles.infoCard}>
-        <Text style={styles.sectionTitle}>Account Details</Text>
+              <Text style={styles.userName}>{session?.name || "Subscriber"}</Text>
+              <Text style={styles.userEmail}>
+                {session?.email || "subscriber@recurly.app"}
+              </Text>
 
-        <View style={styles.row}>
-          <Text style={styles.label}>Full Name</Text>
-          <Text style={styles.value}>{session?.name ?? "-"}</Text>
-        </View>
+              <View style={styles.planTierBadge}>
+                <Ionicons name="shield-checkmark" size={14} color="#10B981" />
+                <Text style={styles.planTierText}>RECURLY BLACK MEMBER</Text>
+              </View>
+            </View>
 
-        <View style={styles.row}>
-          <Text style={styles.label}>Email</Text>
-          <Text style={styles.value}>{session?.email ?? "-"}</Text>
-        </View>
+            {/* STATS STRIP */}
+            <View style={styles.statsStrip}>
+              <View style={styles.statCol}>
+                <Text style={styles.statNum}>{metrics.activeCount}</Text>
+                <Text style={styles.statLabel}>Active Plans</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statCol}>
+                <Text style={styles.statNum}>
+                  ${metrics.totalMonthly.toFixed(0)}
+                </Text>
+                <Text style={styles.statLabel}>Monthly Outflow</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statCol}>
+                <Text style={styles.statNum}>
+                  ${metrics.totalAnnual.toFixed(0)}
+                </Text>
+                <Text style={styles.statLabel}>Annual Projected</Text>
+              </View>
+            </View>
 
-        <View style={styles.row}>
-          <Text style={styles.label}>User ID</Text>
-          <Text style={styles.value}>{session?.id ?? "-"}</Text>
-        </View>
-      </View>
+            {/* PREFERENCES SECTION */}
+            <View style={styles.menuCard}>
+              <Text style={styles.menuSectionHeader}>APP PREFERENCES</Text>
 
-      <Pressable style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Log Out</Text>
-      </Pressable>
-    </ScrollView>
+              <View style={styles.menuRow}>
+                <View style={styles.menuRowLeft}>
+                  <View style={styles.menuIcon}>
+                    <Ionicons name="cash-outline" size={18} color="#10B981" />
+                  </View>
+                  <Text style={styles.menuRowText}>Default Currency</Text>
+                </View>
+                <Text style={styles.menuRowValue}>USD ($)</Text>
+              </View>
+
+              <View style={styles.menuRow}>
+                <View style={styles.menuRowLeft}>
+                  <View style={styles.menuIcon}>
+                    <Ionicons
+                      name="notifications-outline"
+                      size={18}
+                      color="#10B981"
+                    />
+                  </View>
+                  <Text style={styles.menuRowText}>Push Notifications</Text>
+                </View>
+                <Text style={styles.menuRowValue}>Active (48h prior)</Text>
+              </View>
+
+              <View style={[styles.menuRow, { borderBottomWidth: 0 }]}>
+                <View style={styles.menuRowLeft}>
+                  <View style={styles.menuIcon}>
+                    <Ionicons name="color-palette-outline" size={18} color="#10B981" />
+                  </View>
+                  <Text style={styles.menuRowText}>Theme</Text>
+                </View>
+                <Text style={styles.menuRowValue}>Obsidian Emerald</Text>
+              </View>
+            </View>
+
+            {/* DATA MANAGEMENT */}
+            <View style={styles.menuCard}>
+              <Text style={styles.menuSectionHeader}>DATA & BACKUP</Text>
+
+              <Pressable style={styles.menuRow} onPress={handleResetData}>
+                <View style={styles.menuRowLeft}>
+                  <View
+                    style={[
+                      styles.menuIcon,
+                      { backgroundColor: "#151F30" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="refresh-outline"
+                      size={18}
+                      color="#60A5FA"
+                    />
+                  </View>
+                  <Text style={styles.menuRowText}>
+                    Restore Sample Subscriptions
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="#64748B" />
+              </Pressable>
+
+              <View style={[styles.menuRow, { borderBottomWidth: 0 }]}>
+                <View style={styles.menuRowLeft}>
+                  <View
+                    style={[
+                      styles.menuIcon,
+                      { backgroundColor: "#081D14" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="cloud-done-outline"
+                      size={18}
+                      color="#10B981"
+                    />
+                  </View>
+                  <Text style={styles.menuRowText}>Storage Status</Text>
+                </View>
+                <Text style={styles.menuRowValue}>Local & Offline</Text>
+              </View>
+            </View>
+
+            {/* LOGOUT BUTTON */}
+            <Pressable style={styles.logoutButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={20} color="#FB7185" />
+              <Text style={styles.logoutButtonText}>Sign Out of Recurly</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </AppBackground>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    backgroundColor: "#F8FAFC",
-    padding: 24,
-    paddingTop: 40,
+  safeArea: { flex: 1, backgroundColor: "transparent" },
+  scrollContent: { flexGrow: 1, paddingBottom: 50 },
+  webScrollContent: { alignItems: "center" },
+  container: { width: "100%", paddingHorizontal: 20, paddingTop: 16 },
+  webContainer: { maxWidth: 680, paddingTop: 28 },
+  header: { marginBottom: 20 },
+  headerEyebrow: {
+    color: "#10B981",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    marginBottom: 2,
   },
-  headerCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+  headerTitle: {
+    color: "#FFFFFF",
+    fontSize: 26,
+    fontWeight: "900",
+    letterSpacing: -0.5,
+  },
+  userCard: {
+    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#1E2533",
     padding: 24,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#CCFBF1",
+  avatarRing: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: "#081D14",
+    borderWidth: 2,
+    borderColor: "#10B981",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#0F172A",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#64748B",
-  },
-  infoCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    padding: 18,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 12,
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-  },
-  label: {
-    fontSize: 13,
-    color: "#64748B",
-  },
-  value: {
-    fontSize: 13,
-    color: "#0F172A",
-    fontWeight: "600",
-    maxWidth: "60%",
-    textAlign: "right",
-  },
-  button: {
-    backgroundColor: "#14B8A6",
-    borderRadius: 12,
-    paddingVertical: 14,
+  avatarInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#0F3224",
     alignItems: "center",
     justifyContent: "center",
   },
-  buttonText: {
+  avatarText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 28,
+    fontWeight: "900",
+  },
+  userName: {
+    color: "#FFFFFF",
+    fontSize: 20,
+    fontWeight: "900",
+    marginBottom: 4,
+  },
+  userEmail: {
+    color: "#94A3B8",
+    fontSize: 13,
+    marginBottom: 14,
+  },
+  planTierBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#081D14",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#0F462E",
+  },
+  planTierText: {
+    color: "#10B981",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+  },
+  statsStrip: {
+    flexDirection: "row",
+    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#1E2533",
+    padding: 16,
+    marginBottom: 18,
+    alignItems: "center",
+  },
+  statCol: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statNum: {
+    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "900",
+    marginBottom: 2,
+  },
+  statLabel: {
+    color: "#64748B",
+    fontSize: 11,
+    textAlign: "center",
+  },
+  statDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "#1E2533",
+  },
+  menuCard: {
+    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#1E2533",
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 16,
+  },
+  menuSectionHeader: {
+    color: "#64748B",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    marginBottom: 12,
+    paddingTop: 4,
+  },
+  menuRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#161D2A",
+  },
+  menuRowLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  menuIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: "#081D14",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  menuRowText: {
+    color: "#FFFFFF",
+    fontSize: 14,
     fontWeight: "700",
   },
+  menuRowValue: {
+    color: "#94A3B8",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  logoutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "rgba(28, 17, 23, 0.85)",
+    borderWidth: 1,
+    borderColor: "#3D1A28",
+    borderRadius: 16,
+    height: 54,
+    marginTop: 6,
+  },
+  logoutButtonText: {
+    color: "#FB7185",
+    fontSize: 15,
+    fontWeight: "800",
+  },
 });
-
-export default Profile;
