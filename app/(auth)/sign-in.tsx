@@ -56,7 +56,6 @@ export default function SignIn() {
 
     try {
       await signInUser({ email, password });
-      router.dismissAll();
       router.replace("/(auth)/(tabs)");
     } catch (error) {
       const message =

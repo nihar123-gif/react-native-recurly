@@ -51,7 +51,6 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     await signOut();
-    router.dismissAll();
     router.replace("/(auth)/sign-in");
   };
 
@@ -251,23 +250,23 @@ const styles = StyleSheet.create({
   webContainer: { maxWidth: 680, paddingTop: 28 },
   header: { marginBottom: 20 },
   headerEyebrow: {
-    color: "#10B981",
+    color: "#34D399",
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 1.5,
     marginBottom: 2,
   },
   headerTitle: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 26,
     fontWeight: "900",
     letterSpacing: -0.5,
   },
   userCard: {
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.7)",
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.08)",
     padding: 24,
     alignItems: "center",
     marginBottom: 16,
@@ -302,7 +301,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   userName: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 20,
     fontWeight: "900",
     marginBottom: 4,
@@ -324,17 +323,17 @@ const styles = StyleSheet.create({
     borderColor: "#0F462E",
   },
   planTierText: {
-    color: "#10B981",
+    color: "#34D399",
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 0.8,
   },
   statsStrip: {
     flexDirection: "row",
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.75)",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.08)",
     padding: 16,
     marginBottom: 18,
     alignItems: "center",
@@ -344,7 +343,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statNum: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 18,
     fontWeight: "900",
     marginBottom: 2,
@@ -360,10 +359,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#1E2533",
   },
   menuCard: {
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.7)",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.07)",
     paddingHorizontal: 16,
     paddingVertical: 14,
     marginBottom: 16,
@@ -398,7 +397,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   menuRowText: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 14,
     fontWeight: "700",
   },

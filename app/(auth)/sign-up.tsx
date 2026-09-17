@@ -85,7 +85,6 @@ export default function SignUp() {
 
     try {
       await createUser({ name, email, password });
-      router.dismissAll();
       router.replace("/(auth)/(tabs)");
     } catch (error) {
       const message =

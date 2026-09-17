@@ -1,5 +1,33 @@
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/preflight.css" layer(base);
 @import "tailwindcss/utilities.css";
- 
 @import "nativewind/theme";
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+html, body, #root {
+  background-color: #04070D !important;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  color: #F8FAFC;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Executive Obsidian Scrollbar for Web Browser */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #060A13;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E2C44;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #34D399;
+}

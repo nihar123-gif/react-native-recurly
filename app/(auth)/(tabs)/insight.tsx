@@ -306,14 +306,14 @@ const styles = StyleSheet.create({
   webContainer: { maxWidth: 680, paddingTop: 28 },
   header: { marginBottom: 20 },
   headerEyebrow: {
-    color: "#10B981",
+    color: "#34D399",
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 1.5,
     marginBottom: 2,
   },
   headerTitle: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 26,
     fontWeight: "900",
     letterSpacing: -0.5,
@@ -330,10 +330,10 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.7)",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.08)",
     padding: 16,
   },
   metricIconWrap: {
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   metricValue: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 22,
     fontWeight: "900",
     marginBottom: 2,
@@ -363,10 +363,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   sectionCard: {
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.7)",
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.08)",
     padding: 18,
     marginBottom: 18,
   },
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   sectionTitle: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 16,
     fontWeight: "900",
   },
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   categoryName: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 14,
     fontWeight: "800",
     marginBottom: 2,
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   categoryAmount: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 14,
     fontWeight: "800",
   },
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
   },
   tipCard: {
     flexDirection: "row",
-    backgroundColor: "#06090E",
+    backgroundColor: "rgba(18, 28, 46, 0.6)",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#161D2A",

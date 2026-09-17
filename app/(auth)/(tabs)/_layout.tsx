@@ -1,31 +1,43 @@
+import { Platform, useWindowDimensions } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 
 export default function TabLayout() {
+  const { width } = useWindowDimensions();
+  const isWebDesktop = Platform.OS === "web" && width > 768;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#10B981",
+        tabBarActiveTintColor: "#34D399",
         tabBarInactiveTintColor: "#64748B",
         tabBarStyle: {
-          backgroundColor: "#05070B",
-          borderTopColor: "#161D2A",
+          backgroundColor: isWebDesktop ? "rgba(10, 17, 30, 0.92)" : "#060A13",
+          borderTopColor: isWebDesktop ? "rgba(52, 211, 153, 0.3)" : "rgba(255, 255, 255, 0.07)",
+          borderWidth: isWebDesktop ? 1 : 0,
           borderTopWidth: 1,
-          height: 68,
-          paddingTop: 10,
-          paddingBottom: 10,
-          elevation: 12,
-          shadowColor: "#000000",
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.5,
-          shadowRadius: 14,
+          borderColor: isWebDesktop ? "rgba(52, 211, 153, 0.3)" : "transparent",
+          borderRadius: isWebDesktop ? 26 : 0,
+          position: isWebDesktop ? "absolute" : undefined,
+          bottom: isWebDesktop ? 22 : 0,
+          left: isWebDesktop ? "50%" : 0,
+          transform: isWebDesktop ? [{ translateX: -270 }] : undefined,
+          width: isWebDesktop ? 540 : "100%",
+          height: isWebDesktop ? 64 : 68,
+          paddingTop: 8,
+          paddingBottom: 8,
+          elevation: 20,
+          shadowColor: isWebDesktop ? "#10B981" : "#000000",
+          shadowOffset: { width: 0, height: isWebDesktop ? 8 : -6 },
+          shadowOpacity: isWebDesktop ? 0.35 : 0.6,
+          shadowRadius: 24,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "800",
-          marginTop: 4,
-          letterSpacing: 0.2,
+          marginTop: 3,
+          letterSpacing: 0.3,
         },
       }}
     >

@@ -7,6 +7,11 @@ export default function RootLayout() {
       screenOptions={{
         headerShown: false,
       }}
-    />
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="onboarding" />
+      <Stack.Screen name="auth-choice" />
+      <Stack.Screen name="(auth)" />
+    </Stack>
   );
 }

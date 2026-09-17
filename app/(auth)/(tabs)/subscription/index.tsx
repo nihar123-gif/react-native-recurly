@@ -546,14 +546,14 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   headerEyebrow: {
-    color: "#10B981",
+    color: "#34D399",
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 1.5,
     marginBottom: 2,
   },
   headerTitle: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 26,
     fontWeight: "900",
     letterSpacing: -0.5,
@@ -573,17 +573,17 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   addButtonText: {
-    color: "#000000",
+    color: "#04180F",
     fontSize: 13,
     fontWeight: "900",
   },
   searchWrap: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.75)",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.08)",
     paddingHorizontal: 14,
     height: 48,
     marginBottom: 14,
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 14,
   },
   categoriesRow: {
@@ -602,13 +602,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: "rgba(13, 17, 23, 0.8)",
+    backgroundColor: "rgba(18, 28, 46, 0.6)",
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.07)",
   },
   categoryPillActive: {
-    backgroundColor: "#0E241B",
-    borderColor: "#10B981",
+    backgroundColor: "rgba(16, 185, 129, 0.15)",
+    borderColor: "#34D399",
   },
   categoryPillText: {
     color: "#94A3B8",
@@ -616,15 +616,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   categoryPillTextActive: {
-    color: "#10B981",
+    color: "#34D399",
     fontWeight: "900",
   },
   summaryStrip: {
     flexDirection: "row",
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.75)",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.08)",
     padding: 14,
     marginBottom: 18,
     alignItems: "center",
@@ -644,12 +644,12 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   summaryValue: {
-    color: "#FFFFFF",
+    color: "#38BDF8",
     fontSize: 14,
     fontWeight: "800",
   },
   summaryValueEmerald: {
-    color: "#10B981",
+    color: "#34D399",
     fontSize: 17,
     fontWeight: "900",
   },
@@ -664,10 +664,10 @@ const styles = StyleSheet.create({
   planCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.7)",
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: "rgba(255, 255, 255, 0.07)",
     padding: 14,
   },
   planCardPressed: {
@@ -679,7 +679,7 @@ const styles = StyleSheet.create({
     marginLeft: 14,
   },
   planName: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 15,
     fontWeight: "800",
     marginBottom: 4,
@@ -699,7 +699,7 @@ const styles = StyleSheet.create({
     borderColor: "#0F462E",
   },
   categoryBadgeText: {
-    color: "#10B981",
+    color: "#34D399",
     fontSize: 9,
     fontWeight: "900",
     letterSpacing: 0.5,
@@ -718,17 +718,17 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   planPrice: {
-    color: "#FFFFFF",
+    color: "#34D399",
     fontSize: 16,
     fontWeight: "900",
   },
   planSubPrice: {
-    color: "#64748B",
+    color: "#6EE7B7",
     fontSize: 11,
     marginTop: 2,
   },
   emptyState: {
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    backgroundColor: "rgba(18, 28, 46, 0.7)",
     borderRadius: 22,
     borderWidth: 1,
     borderColor: "#1E2533",
@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyStateTitle: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 18,
     fontWeight: "900",
     marginTop: 14,
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContainer: {
-    backgroundColor: "#070A0F",
+    backgroundColor: "#080E1A",
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderWidth: 1,
@@ -797,7 +797,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.4,
   },
   modalTitle: {
-    color: "#FFFFFF",
+    color: "#F8FAFC",
     fontSize: 22,
     fontWeight: "900",
     marginTop: 2,
