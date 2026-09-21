@@ -16,7 +16,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import AppBackground from "@/components/ui/AppBackground";
 import Badge from "@/components/ui/Badge";
 import { theme } from "@/constants/theme";
-import { getSession, signOut } from "@/lib/auth";
+import { getSession, setCurrentUserRole, signOut, UserSession } from "@/lib/auth";
 import {
   getMetrics,
   getSubscriptions,
@@ -29,11 +29,7 @@ export default function ProfileScreen() {
   const { width } = useWindowDimensions();
   const isWeb = width > 768;
 
-  const [session, setSession] = useState<{
-    id: string;
-    name: string;
-    email: string;
-  } | null>(null);
+  const [session, setSession] = useState<UserSession | null>(null);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
 
   const loadProfile = useCallback(async () => {
@@ -54,6 +50,26 @@ export default function ProfileScreen() {
   const handleLogout = async () => {
     await signOut();
     router.replace("/(auth)/sign-in");
+  };
+
+  const handleToggleRole = async () => {
+    const nextRole = session?.role === "admin" ? "user" : "admin";
+    await setCurrentUserRole(nextRole);
+    await loadProfile();
+    if (Platform.OS === "web") {
+      window.alert(
+        `Role switched to: ${
+          nextRole === "admin" ? "App Owner / Admin" : "Regular User"
+        }`
+      );
+    } else {
+      Alert.alert(
+        "Role Switched",
+        `You are now viewing as: ${
+          nextRole === "admin" ? "App Owner / Admin" : "Regular User"
+        }`
+      );
+    }
   };
 
   const handleResetData = async () => {
@@ -88,6 +104,8 @@ export default function ProfileScreen() {
     }
   };
 
+  const isAdmin = session?.role === "admin";
+
   return (
     <AppBackground>
       <SafeAreaView style={styles.safeArea}>
@@ -120,18 +138,81 @@ export default function ProfileScreen() {
                 {session?.email || "subscriber@recurly.app"}
               </Text>
 
-              <Badge
-                label="PRO MEMBER"
-                variant="primary"
-                style={{ marginTop: 10 }}
-              />
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 10, alignItems: "center" }}>
+                <Badge
+                  label={isAdmin ? "APP OWNER / ADMIN" : "SUBSCRIBER"}
+                  variant={isAdmin ? "primary" : "neutral"}
+                />
+                <Badge
+                  label="PRO TIER"
+                  variant="success"
+                />
+              </View>
+            </View>
+
+            {/* APP OWNER / ADMIN PORTAL CARD */}
+            <View style={[styles.adminCard, !isAdmin && styles.adminCardInactive]}>
+              <View style={styles.adminCardHeader}>
+                <View style={styles.adminBadgeRow}>
+                  <View
+                    style={[
+                      styles.adminBadgeIcon,
+                      { backgroundColor: isAdmin ? theme.colors.primary : theme.colors.cardBorder },
+                    ]}
+                  >
+                    <Ionicons
+                      name="shield-checkmark"
+                      size={16}
+                      color={isAdmin ? "#FFFFFF" : theme.colors.textSecondary}
+                    />
+                  </View>
+                  <View>
+                    <Text style={styles.adminBadgeEyebrow}>APP OWNER PORTAL</Text>
+                    <Text style={styles.adminBadgeTitle}>Plan Catalog Management</Text>
+                  </View>
+                </View>
+                <Badge
+                  label={isAdmin ? "ADMIN ACCESS" : "USER VIEW"}
+                  variant={isAdmin ? "primary" : "neutral"}
+                />
+              </View>
+
+              <Text style={styles.adminCardDesc}>
+                Create, edit, activate/deactivate, and publish subscription plans to the public catalog for all users.
+              </Text>
+
+              <View style={styles.adminActionsRow}>
+                {isAdmin && (
+                  <Pressable
+                    style={styles.adminOpenBtn}
+                    onPress={() => router.push("/(auth)/(tabs)/admin" as any)}
+                  >
+                    <Ionicons name="settings" size={16} color="#FFFFFF" />
+                    <Text style={styles.adminOpenBtnText}>Open Plan Management</Text>
+                  </Pressable>
+                )}
+
+                <Pressable
+                  style={[styles.adminToggleRoleBtn, !isAdmin && { flex: 1 }]}
+                  onPress={handleToggleRole}
+                >
+                  <Ionicons
+                    name={isAdmin ? "swap-horizontal" : "key-outline"}
+                    size={16}
+                    color={theme.colors.primary}
+                  />
+                  <Text style={styles.adminToggleRoleText}>
+                    {isAdmin ? "Switch to Regular User Mode" : "Switch to App Owner Mode"}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
 
             {/* STATS STRIP */}
             <View style={styles.statsStrip}>
               <View style={styles.statCol}>
                 <Text style={styles.statNum}>{metrics.activeCount}</Text>
-                <Text style={styles.statLabel}>Active Plans</Text>
+                <Text style={styles.statLabel}>My Subscriptions</Text>
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statCol}>
@@ -313,6 +394,93 @@ const styles = StyleSheet.create({
   userEmail: {
     color: theme.colors.textSecondary,
     fontSize: 13,
+  },
+
+  // ADMIN PORTAL CARD
+  adminCard: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    padding: 18,
+    borderWidth: 1.5,
+    borderColor: theme.colors.primaryBorder,
+    marginBottom: 16,
+    ...theme.shadows.subtle,
+  },
+  adminCardInactive: {
+    borderColor: theme.colors.cardBorder,
+  },
+  adminCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  adminBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  adminBadgeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.borderRadius.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adminBadgeEyebrow: {
+    color: theme.colors.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+  },
+  adminBadgeTitle: {
+    color: theme.colors.text,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  adminCardDesc: {
+    color: theme.colors.textSecondary,
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  adminActionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    alignItems: "center",
+  },
+  adminOpenBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: theme.borderRadius.md,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  adminOpenBtnText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  adminToggleRoleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: theme.colors.primaryLight,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryBorder,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  adminToggleRoleText: {
+    color: theme.colors.primary,
+    fontSize: 12.5,
+    fontWeight: "600",
   },
 
   // STATS STRIP

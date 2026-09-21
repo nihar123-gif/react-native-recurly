@@ -17,6 +17,10 @@ import Badge from "@/components/ui/Badge";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import { theme } from "@/constants/theme";
 import {
+  AppPlan,
+  getActivePublicPlans,
+} from "@/lib/plans";
+import {
   BillingCycle,
   checkDuplicateName,
   formatDateDisplay,
@@ -108,10 +112,16 @@ export default function SubscriptionFormModal({
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDatePickerDialog, setShowDatePickerDialog] = useState(false);
+  const [availablePlans, setAvailablePlans] = useState<AppPlan[]>([]);
+  const [selectedCatalogPlanId, setSelectedCatalogPlanId] = useState<string | null>(null);
 
   // Initialize or reset form on visibility change
   useEffect(() => {
     if (visible) {
+      if (mode === "create") {
+        getActivePublicPlans().then((p) => setAvailablePlans(p));
+        setSelectedCatalogPlanId(null);
+      }
       if (initialData) {
         setName(initialData.name || "");
         setCategory(initialData.category || "streaming");
@@ -150,7 +160,22 @@ export default function SubscriptionFormModal({
       setIsDuplicate(false);
       setIsSubmitting(false);
     }
-  }, [visible, initialData]);
+  }, [visible, initialData, mode]);
+
+  const handleSelectCatalogPlan = (plan: AppPlan) => {
+    setSelectedCatalogPlanId(plan.id);
+    setName(plan.name);
+    setCategory(plan.category);
+    setPrice(plan.price.toString());
+    setBillingCycle(plan.billingCycle);
+    setWebsite(plan.websiteUrl || "");
+    const bulletFeatures =
+      plan.features && plan.features.length > 0
+        ? "\n\nPlan Features:\n• " + plan.features.join("\n• ")
+        : "";
+    setNotes((plan.description || "") + bulletFeatures);
+    setErrors({});
+  };
 
   // Check duplicate name
   useEffect(() => {
@@ -306,6 +331,61 @@ export default function SubscriptionFormModal({
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
+              {/* CHOOSE FROM APP CATALOG */}
+              {!isEdit && availablePlans.length > 0 && (
+                <View style={styles.catalogSection}>
+                  <View style={styles.catalogSectionHeader}>
+                    <Ionicons
+                      name="sparkles"
+                      size={15}
+                      color={theme.colors.primary}
+                    />
+                    <Text style={styles.catalogSectionTitle}>
+                      QUICK SELECT FROM AVAILABLE PLANS
+                    </Text>
+                  </View>
+                  <Text style={styles.catalogSectionSubtitle}>
+                    Choose a plan to auto-populate service name, pricing, and features:
+                  </Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.catalogScroll}
+                  >
+                    {availablePlans.map((plan) => {
+                      const isPicked = selectedCatalogPlanId === plan.id;
+                      return (
+                        <Pressable
+                          key={plan.id}
+                          style={[
+                            styles.catalogCard,
+                            isPicked && styles.catalogCardActive,
+                          ]}
+                          onPress={() => handleSelectCatalogPlan(plan)}
+                        >
+                          <CategoryIcon category={plan.category} size={30} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.catalogCardName} numberOfLines={1}>
+                              {plan.name}
+                            </Text>
+                            <Text style={styles.catalogCardMeta}>
+                              ${plan.price.toFixed(2)}/{plan.billingCycle.slice(0, 2)} • {plan.provider}
+                            </Text>
+                          </View>
+                          {isPicked && (
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={18}
+                              color={theme.colors.primary}
+                            />
+                          )}
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
+
               {/* 1. SERVICE NAME */}
               <View style={styles.fieldGroup}>
                 <View style={styles.fieldLabelRow}>
@@ -914,6 +994,64 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 20,
     gap: 18,
+  },
+
+  // CATALOG SECTION
+  catalogSection: {
+    backgroundColor: theme.colors.backgroundAlt,
+    borderRadius: theme.borderRadius.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    gap: 8,
+  },
+  catalogSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  catalogSectionTitle: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: theme.colors.primary,
+    letterSpacing: 0.6,
+  },
+  catalogSectionSubtitle: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    marginBottom: 4,
+  },
+  catalogScroll: {
+    gap: 10,
+    paddingVertical: 4,
+  },
+  catalogCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    minWidth: 160,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  catalogCardActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryLight,
+  },
+  catalogCardName: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: theme.colors.text,
+  },
+  catalogCardMeta: {
+    fontSize: 11,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
 
   // FIELDS
