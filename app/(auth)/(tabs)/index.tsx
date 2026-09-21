@@ -33,6 +33,7 @@ export default function HomeScreen() {
   const isWeb = width > 768;
 
   const [userName, setUserName] = useState<string>("Member");
+  const [isAdmin, setIsAdmin] = useState<boolean>(true);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,6 +43,7 @@ export default function HomeScreen() {
       if (session?.name) {
         setUserName(session.name.split(" ")[0]);
       }
+      setIsAdmin(session?.role === "admin");
       const subs = await getSubscriptions();
       setSubscriptions(subs);
     } catch (error) {
@@ -102,6 +104,21 @@ export default function HomeScreen() {
               </View>
 
               <View style={styles.topActions}>
+                {isAdmin && (
+                  <Pressable
+                    style={styles.adminHeaderButton}
+                    onPress={() => router.push("/(auth)/(tabs)/admin" as any)}
+                    accessibilityLabel="Admin Plan Management"
+                  >
+                    <Ionicons
+                      name="shield-checkmark"
+                      size={15}
+                      color={theme.colors.primary}
+                    />
+                    <Text style={styles.adminHeaderButtonText}>Admin</Text>
+                  </Pressable>
+                )}
+
                 <Pressable
                   style={styles.profileButton}
                   onPress={() => router.push("/(auth)/(tabs)/profile")}
@@ -124,6 +141,28 @@ export default function HomeScreen() {
                 </Pressable>
               </View>
             </View>
+
+            {/* APP OWNER SHORTCUT BANNER */}
+            {isAdmin && (
+              <Pressable
+                style={styles.adminBanner}
+                onPress={() => router.push("/(auth)/(tabs)/admin" as any)}
+              >
+                <View style={styles.adminBannerLeft}>
+                  <View style={styles.adminBannerIcon}>
+                    <Ionicons name="shield-checkmark" size={15} color="#FFFFFF" />
+                  </View>
+                  <View>
+                    <Text style={styles.adminBannerTitle}>App Owner Portal</Text>
+                    <Text style={styles.adminBannerSub}>Manage & Publish Subscription Catalog</Text>
+                  </View>
+                </View>
+                <View style={styles.adminBannerRight}>
+                  <Text style={styles.adminBannerCta}>Manage</Text>
+                  <Ionicons name="chevron-forward" size={14} color={theme.colors.primary} />
+                </View>
+              </Pressable>
+            )}
 
             {/* EXECUTIVE SUMMARY CARD (DARK NAVY ANCHOR) */}
             <View style={styles.heroCard}>
@@ -495,6 +534,71 @@ const styles = StyleSheet.create({
   primaryAddButtonText: {
     color: "#FFFFFF",
     fontSize: 13.5,
+    fontWeight: "700",
+  },
+  adminHeaderButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    height: 40,
+    paddingHorizontal: 10,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primaryLight,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryBorder,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  adminHeaderButtonText: {
+    color: theme.colors.primary,
+    fontSize: 12.5,
+    fontWeight: "700",
+  },
+  adminBanner: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryBorder,
+    marginBottom: 16,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  adminBannerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  adminBannerIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: theme.colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  adminBannerTitle: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  adminBannerSub: {
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    marginTop: 1,
+  },
+  adminBannerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  adminBannerCta: {
+    color: theme.colors.primary,
+    fontSize: 12,
     fontWeight: "700",
   },
 
