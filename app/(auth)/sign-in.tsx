@@ -106,10 +106,9 @@ export default function SignIn() {
                 >
                   <Ionicons
                     name="arrow-back"
-                    size={18}
+                    size={20}
                     color={theme.colors.text}
                   />
-                  <Text style={styles.backText}>Back</Text>
                 </Pressable>
 
                 <Badge label="256-Bit SSL" variant="primary" dot />
@@ -290,22 +289,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    width: 40,
+    height: 40,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.card,
     borderWidth: 1,
     borderColor: theme.colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
     ...theme.shadows.subtle,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  backText: {
-    color: theme.colors.text,
-    fontSize: 13,
-    fontWeight: "700",
   },
   buttonPressed: {
     opacity: 0.9,
