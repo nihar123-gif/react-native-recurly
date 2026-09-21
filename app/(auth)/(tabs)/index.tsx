@@ -10,10 +10,14 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import AppBackground from "@/components/ui/AppBackground";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import Illustration from "@/components/ui/Illustration";
+import Badge from "@/components/ui/Badge";
+import { theme } from "@/constants/theme";
 import { getSession } from "@/lib/auth";
 import {
   calculateMonthlyEquivalent,
@@ -22,9 +26,6 @@ import {
   getSubscriptions,
   Subscription,
 } from "@/lib/subscriptions";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useFocusEffect, useRouter } from "expo-router";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -70,7 +71,8 @@ export default function HomeScreen() {
   };
 
   const monthlyInt = Math.floor(metrics.totalMonthly).toLocaleString("en-US");
-  const monthlyCents = (metrics.totalMonthly % 1).toFixed(2).split(".")[1] || "00";
+  const monthlyCents =
+    (metrics.totalMonthly % 1).toFixed(2).split(".")[1] || "00";
 
   return (
     <AppBackground>
@@ -85,7 +87,7 @@ export default function HomeScreen() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#10B981"
+              tintColor={theme.colors.primary}
             />
           }
         >
@@ -93,23 +95,23 @@ export default function HomeScreen() {
             {/* TOP BAR */}
             <View style={styles.topBar}>
               <View>
-                <View style={styles.eyebrowRow}>
-                  <View style={styles.eyebrowDot} />
-                  <Text style={styles.greetingEyebrow}>PORTFOLIO OVERVIEW</Text>
-                </View>
+                <Text style={styles.greetingEyebrow}>PORTFOLIO OVERVIEW</Text>
                 <Text style={styles.greetingName}>
-                  <Text style={styles.greetingPrefix}>Welcome back, </Text>
-                  <Text style={styles.greetingHighlight}>{userName}</Text>
+                  Welcome back, <Text style={styles.greetingHighlight}>{userName}</Text>
                 </Text>
               </View>
 
               <View style={styles.topActions}>
                 <Pressable
-                  style={styles.iconButton}
+                  style={styles.profileButton}
                   onPress={() => router.push("/(auth)/(tabs)/profile")}
                   accessibilityLabel="Profile"
                 >
-                  <Ionicons name="person-outline" size={19} color="#34D399" />
+                  <Ionicons
+                    name="person-outline"
+                    size={18}
+                    color={theme.colors.textSecondary}
+                  />
                 </Pressable>
 
                 <Pressable
@@ -117,35 +119,23 @@ export default function HomeScreen() {
                   onPress={() => router.push("/(auth)/(tabs)/subscription")}
                   accessibilityLabel="Add Subscription"
                 >
-                  <LinearGradient
-                    colors={["#34D399", "#10B981", "#059669"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.primaryAddGradient}
-                  >
-                    <Ionicons name="add" size={22} color="#04180F" />
-                  </LinearGradient>
+                  <Ionicons name="add" size={18} color="#FFFFFF" />
+                  <Text style={styles.primaryAddButtonText}>Add Plan</Text>
                 </Pressable>
               </View>
             </View>
 
-            {/* TOTAL SPEND HERO CARD */}
-            <LinearGradient
-              colors={["#122338", "#0C1929", "#08101E"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroCard}
-            >
+            {/* EXECUTIVE SUMMARY CARD (DARK NAVY ANCHOR) */}
+            <View style={styles.heroCard}>
               <View style={styles.heroCardHeader}>
                 <View style={styles.heroBadge}>
-                  <View style={styles.emeraldGlowDot} />
+                  <View style={styles.heroBadgeDot} />
                   <Text style={styles.heroBadgeText}>MONTHLY COMMITTED</Text>
                 </View>
                 <View style={styles.heroActiveCountBadge}>
-                  <Text style={styles.heroActiveCountNum}>
-                    {metrics.activeCount}
+                  <Text style={styles.heroActiveCountText}>
+                    {metrics.activeCount} Active Plans
                   </Text>
-                  <Text style={styles.heroActiveCountLabel}> Active Plans</Text>
                 </View>
               </View>
 
@@ -171,14 +161,10 @@ export default function HomeScreen() {
                 <View style={styles.heroFooterCol}>
                   <Text style={styles.heroFooterLabel}>Due This Week</Text>
                   <View style={styles.dueRow}>
-                    {metrics.upcomingCount > 0 && <View style={styles.dueDot} />}
                     <Text
                       style={[
                         styles.heroDueValue,
-                        {
-                          color:
-                            metrics.upcomingCount > 0 ? "#FBBF24" : "#94A3B8",
-                        },
+                        metrics.upcomingCount > 0 && styles.heroDueValueWarning,
                       ]}
                     >
                       {metrics.upcomingCount}{" "}
@@ -192,71 +178,71 @@ export default function HomeScreen() {
                     <View style={styles.heroVerticalDivider} />
                     <View style={styles.heroFooterCol}>
                       <Text style={styles.heroFooterLabel}>Avg / Active Plan</Text>
-                      <Text style={[styles.heroAnnualValue, { color: "#34D399" }]}>
-                        {formatCurrency(metrics.totalMonthly / Math.max(1, metrics.activeCount))}
+                      <Text style={styles.heroAvgValue}>
+                        {formatCurrency(
+                          metrics.totalMonthly /
+                            Math.max(1, metrics.activeCount)
+                        )}
                       </Text>
                     </View>
                   </>
                 )}
               </View>
-            </LinearGradient>
+            </View>
 
             {/* QUICK SHORTCUTS */}
             <View style={styles.shortcutRow}>
               <Pressable
-                style={styles.shortcutPressable}
+                style={styles.shortcutCard}
                 onPress={() => router.push("/(auth)/(tabs)/subscription")}
               >
-                <LinearGradient
-                  colors={["#121D30", "#0C1423"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.shortcutCard}
-                >
-                  <View
-                    style={[
-                      styles.shortcutIconWrap,
-                      { backgroundColor: "rgba(16, 185, 129, 0.14)", borderColor: "rgba(16, 185, 129, 0.3)" },
-                    ]}
-                  >
-                    <Ionicons name="layers-outline" size={20} color="#34D399" />
-                  </View>
-                  <View style={styles.shortcutTextWrap}>
-                    <Text style={styles.shortcutTitlePlans}>Manage Plans</Text>
-                    <Text style={styles.shortcutSubtitle}>
-                      View & add subscriptions
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#34D399" />
-                </LinearGradient>
+                <View style={styles.shortcutIconWrap}>
+                  <Ionicons
+                    name="layers-outline"
+                    size={20}
+                    color={theme.colors.primary}
+                  />
+                </View>
+                <View style={styles.shortcutTextWrap}>
+                  <Text style={styles.shortcutTitle}>Manage Plans</Text>
+                  <Text style={styles.shortcutSubtitle}>
+                    View & add subscriptions
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={theme.colors.textMuted}
+                />
               </Pressable>
 
               <Pressable
-                style={styles.shortcutPressable}
+                style={styles.shortcutCard}
                 onPress={() => router.push("/(auth)/(tabs)/insight")}
               >
-                <LinearGradient
-                  colors={["#121D30", "#0C1423"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.shortcutCard}
+                <View
+                  style={[
+                    styles.shortcutIconWrap,
+                    { backgroundColor: theme.colors.secondaryLight },
+                  ]}
                 >
-                  <View
-                    style={[
-                      styles.shortcutIconWrap,
-                      { backgroundColor: "rgba(129, 140, 248, 0.14)", borderColor: "rgba(129, 140, 248, 0.3)" },
-                    ]}
-                  >
-                    <Ionicons name="pie-chart-outline" size={20} color="#A5B4FC" />
-                  </View>
-                  <View style={styles.shortcutTextWrap}>
-                    <Text style={styles.shortcutTitleAnalytics}>Analytics</Text>
-                    <Text style={styles.shortcutSubtitle}>
-                      Category distribution
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={16} color="#A5B4FC" />
-                </LinearGradient>
+                  <Ionicons
+                    name="pie-chart-outline"
+                    size={20}
+                    color={theme.colors.secondary}
+                  />
+                </View>
+                <View style={styles.shortcutTextWrap}>
+                  <Text style={styles.shortcutTitle}>Analytics</Text>
+                  <Text style={styles.shortcutSubtitle}>
+                    Category distribution
+                  </Text>
+                </View>
+                <Ionicons
+                  name="chevron-forward"
+                  size={18}
+                  color={theme.colors.textMuted}
+                />
               </Pressable>
             </View>
 
@@ -265,12 +251,9 @@ export default function HomeScreen() {
               <View style={styles.sectionWrap}>
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionTitleRow}>
-                    <View style={styles.pulsingDot} />
-                    <Text style={styles.sectionTitleRenew}>Renewing Soon</Text>
+                    <Text style={styles.sectionTitle}>Renewing Soon</Text>
                   </View>
-                  <View style={styles.sectionBadgeWrap}>
-                    <Text style={styles.sectionActionText}>Next 7 Days</Text>
-                  </View>
+                  <Badge label="Next 7 Days" variant="warning" />
                 </View>
 
                 <ScrollView
@@ -280,10 +263,11 @@ export default function HomeScreen() {
                 >
                   {metrics.upcomingIn7Days.map((sub) => {
                     const daysLeft = getDaysUntilDue(sub.nextPaymentDate);
+                    const isUrgent = daysLeft <= 2;
                     return (
                       <Pressable
                         key={sub.id}
-                        style={styles.upcomingPressable}
+                        style={styles.upcomingCard}
                         onPress={() =>
                           router.push({
                             pathname: "/(auth)/(tabs)/subscription/[id]",
@@ -291,47 +275,29 @@ export default function HomeScreen() {
                           })
                         }
                       >
-                        <LinearGradient
-                          colors={["#132238", "#0D1729"]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.upcomingCard}
-                        >
-                          <View style={styles.upcomingCardTop}>
-                            <CategoryIcon category={sub.category} size={36} />
-                            <View
-                              style={[
-                                styles.dueBadge,
-                                daysLeft <= 2
-                                  ? styles.dueBadgeUrgent
-                                  : styles.dueBadgeNormal,
-                              ]}
-                            >
-                              <Text
-                                style={[
-                                  styles.dueBadgeText,
-                                  daysLeft <= 2 && styles.dueBadgeTextUrgent,
-                                ]}
-                              >
-                                {daysLeft === 0
-                                  ? "Today"
-                                  : daysLeft === 1
-                                  ? "Tomorrow"
-                                  : `In ${daysLeft}d`}
-                              </Text>
-                            </View>
-                          </View>
+                        <View style={styles.upcomingCardTop}>
+                          <CategoryIcon category={sub.category} size={38} />
+                          <Badge
+                            label={
+                              daysLeft === 0
+                                ? "Due Today"
+                                : daysLeft === 1
+                                ? "Tomorrow"
+                                : `In ${daysLeft}d`
+                            }
+                            variant={isUrgent ? "error" : "warning"}
+                          />
+                        </View>
 
-                          <Text style={styles.upcomingName} numberOfLines={1}>
-                            {sub.name}
-                          </Text>
-                          <Text style={styles.upcomingPrice}>
-                            {formatCurrency(sub.price)}
-                          </Text>
-                          <Text style={styles.upcomingCycle}>
-                            via {sub.paymentMethod.split(" ")[0]}
-                          </Text>
-                        </LinearGradient>
+                        <Text style={styles.upcomingName} numberOfLines={1}>
+                          {sub.name}
+                        </Text>
+                        <Text style={styles.upcomingPrice}>
+                          {formatCurrency(sub.price)}
+                        </Text>
+                        <Text style={styles.upcomingCycle}>
+                          via {sub.paymentMethod.split(" ")[0]}
+                        </Text>
                       </Pressable>
                     );
                   })}
@@ -342,9 +308,7 @@ export default function HomeScreen() {
             {/* ALL SUBSCRIPTIONS LIST */}
             <View style={styles.sectionWrap}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitleTracked}>
-                  Tracked Subscriptions
-                </Text>
+                <Text style={styles.sectionTitle}>Tracked Subscriptions</Text>
                 <Pressable
                   onPress={() => router.push("/(auth)/(tabs)/subscription")}
                   style={styles.viewAllButton}
@@ -352,26 +316,30 @@ export default function HomeScreen() {
                   <Text style={styles.viewAllText}>
                     See All ({subscriptions.length})
                   </Text>
-                  <Ionicons name="arrow-forward" size={13} color="#34D399" />
+                  <Ionicons
+                    name="arrow-forward"
+                    size={14}
+                    color={theme.colors.primary}
+                  />
                 </Pressable>
               </View>
 
               {subscriptions.length === 0 ? (
-                <View style={styles.emptyWrap}>
+                <View style={styles.emptyCard}>
                   <Illustration
                     name="empty-state-no-subscriptions"
-                    width={190}
-                    height={190}
+                    width={180}
+                    height={180}
                   />
                   <Text style={styles.emptyTitle}>No Subscriptions Yet</Text>
                   <Text style={styles.emptySubtitle}>
-                    Track your monthly recurring expenses in one clean dashboard.
+                    Track your recurring monthly expenses in one clean dashboard.
                   </Text>
                   <Pressable
                     style={styles.emptyButton}
                     onPress={() => router.push("/(auth)/(tabs)/subscription")}
                   >
-                    <Ionicons name="add" size={20} color="#04180F" />
+                    <Ionicons name="add" size={18} color="#FFFFFF" />
                     <Text style={styles.emptyButtonText}>Add First Plan</Text>
                   </Pressable>
                 </View>
@@ -385,8 +353,8 @@ export default function HomeScreen() {
                       <Pressable
                         key={sub.id}
                         style={({ pressed }) => [
-                          styles.subCardPressable,
-                          pressed && styles.pressedCard,
+                          styles.subCard,
+                          pressed && styles.subCardPressed,
                         ]}
                         onPress={() =>
                           router.push({
@@ -395,54 +363,47 @@ export default function HomeScreen() {
                           })
                         }
                       >
-                        <LinearGradient
-                          colors={["#121D32", "#0C1525"]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={styles.subCard}
-                        >
-                          <CategoryIcon category={sub.category} size={44} />
+                        <View style={styles.subIconWrap}>
+                          <CategoryIcon category={sub.category} size={40} />
+                        </View>
 
-                          <View style={styles.subInfo}>
-                            <Text style={styles.subName}>{sub.name}</Text>
-                            <View style={styles.subMetaRow}>
-                              <View style={styles.subCycleBadge}>
-                                <Text style={styles.subCycle}>
-                                  {sub.billingCycle.toUpperCase()}
-                                </Text>
-                              </View>
-                              <Text style={styles.subDot}>•</Text>
-                              <Text
-                                style={[
-                                  styles.subDueDate,
-                                  daysLeft <= 5 && styles.subDueDateUrgent,
-                                ]}
-                              >
-                                {daysLeft <= 0
-                                  ? "Due today"
-                                  : `Due in ${daysLeft}d`}
-                              </Text>
-                            </View>
-                          </View>
-
-                          <View style={styles.subPriceWrap}>
-                            <Text style={styles.subPrice}>
-                              {formatCurrency(sub.price)}
+                        <View style={styles.subInfo}>
+                          <Text style={styles.subName}>{sub.name}</Text>
+                          <View style={styles.subMetaRow}>
+                            <Text style={styles.subCycle}>
+                              {sub.billingCycle.toUpperCase()}
                             </Text>
-                            {sub.billingCycle !== "monthly" && (
-                              <Text style={styles.subEquivalent}>
-                                ≈ {formatCurrency(monthly)}/mo
-                              </Text>
-                            )}
+                            <Text style={styles.subMetaDot}>•</Text>
+                            <Text
+                              style={[
+                                styles.subDueDate,
+                                daysLeft <= 3 && styles.subDueDateUrgent,
+                              ]}
+                            >
+                              {daysLeft <= 0
+                                ? "Due today"
+                                : `Due in ${daysLeft}d`}
+                            </Text>
                           </View>
+                        </View>
 
-                          <Ionicons
-                            name="chevron-forward"
-                            size={16}
-                            color="#34D399"
-                            style={{ marginLeft: 8 }}
-                          />
-                        </LinearGradient>
+                        <View style={styles.subPriceWrap}>
+                          <Text style={styles.subPrice}>
+                            {formatCurrency(sub.price)}
+                          </Text>
+                          {sub.billingCycle !== "monthly" && (
+                            <Text style={styles.subEquivalent}>
+                              ≈ {formatCurrency(monthly)}/mo
+                            </Text>
+                          )}
+                        </View>
+
+                        <Ionicons
+                          name="chevron-forward"
+                          size={18}
+                          color={theme.colors.textMuted}
+                          style={{ marginLeft: 6 }}
+                        />
                       </Pressable>
                     );
                   })}
@@ -466,7 +427,7 @@ const styles = StyleSheet.create({
   },
   webScrollContent: {
     alignItems: "center",
-    paddingBottom: 120,
+    paddingBottom: 60,
   },
   container: {
     width: "100%",
@@ -474,93 +435,78 @@ const styles = StyleSheet.create({
     paddingTop: 16,
   },
   webContainer: {
-    maxWidth: 880,
-    paddingTop: 36,
-    paddingHorizontal: 24,
+    maxWidth: 920,
+    paddingTop: 32,
+    paddingHorizontal: 32,
   },
+
+  // TOP BAR
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
   },
-  eyebrowRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 3,
-  },
-  eyebrowDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#34D399",
-  },
   greetingEyebrow: {
-    color: "#34D399",
     fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.8,
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.8,
+    marginBottom: 2,
+    textTransform: "uppercase",
   },
   greetingName: {
-    fontSize: 24,
-    fontWeight: "900",
+    fontSize: 22,
+    fontWeight: "800",
+    color: theme.colors.text,
     letterSpacing: -0.4,
   },
-  greetingPrefix: {
-    color: "#94A3B8",
-  },
   greetingHighlight: {
-    color: "#34D399",
-    textShadowColor: "rgba(52, 211, 153, 0.4)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
+    color: theme.colors.primary,
   },
   topActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  iconButton: {
-    cursor: "pointer" as any,
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "rgba(18, 28, 46, 0.8)",
+  profileButton: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
-    borderColor: "rgba(52, 211, 153, 0.25)",
+    borderColor: theme.colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   primaryAddButton: {
-    cursor: "pointer" as any,
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    overflow: "hidden",
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  primaryAddGradient: {
-    width: "100%",
-    height: "100%",
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
+  primaryAddButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13.5,
+    fontWeight: "700",
+  },
+
+  // EXECUTIVE HERO CARD (DARK NAVY)
   heroCard: {
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: "rgba(52, 211, 153, 0.35)",
+    backgroundColor: theme.colors.darkNavy,
+    borderRadius: theme.borderRadius.xl,
     padding: 22,
     marginBottom: 20,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.darkNavyBorder,
+    ...theme.shadows.card,
   },
   heroCardHeader: {
     flexDirection: "row",
@@ -571,88 +517,65 @@ const styles = StyleSheet.create({
   heroBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
-    backgroundColor: "rgba(16, 185, 129, 0.16)",
-    paddingHorizontal: 11,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(52, 211, 153, 0.4)",
+    gap: 6,
   },
-  emeraldGlowDot: {
+  heroBadgeDot: {
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: "#34D399",
-    shadowColor: "#34D399",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 6,
+    backgroundColor: theme.colors.secondary,
   },
   heroBadgeText: {
-    color: "#34D399",
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: "800",
     letterSpacing: 0.8,
+    color: "#94A3B8",
   },
   heroActiveCountBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(52, 211, 153, 0.1)",
-    paddingHorizontal: 11,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: theme.borderRadius.sm,
     borderWidth: 1,
-    borderColor: "rgba(52, 211, 153, 0.25)",
+    borderColor: "rgba(255, 255, 255, 0.12)",
   },
-  heroActiveCountNum: {
-    color: "#34D399",
-    fontSize: 12,
-    fontWeight: "900",
-  },
-  heroActiveCountLabel: {
-    color: "#A7F3D0",
-    fontSize: 12,
+  heroActiveCountText: {
+    fontSize: 11.5,
     fontWeight: "700",
+    color: "#E2E8F0",
   },
   heroAmountRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    marginVertical: 4,
+    marginBottom: 16,
   },
   heroCurrencySymbol: {
-    color: "#34D399",
-    fontSize: 32,
-    fontWeight: "900",
-    marginRight: 3,
-    textShadowColor: "rgba(52, 211, 153, 0.4)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
+    fontSize: 26,
+    fontWeight: "700",
+    color: theme.colors.secondaryLight,
+    marginRight: 2,
   },
   heroAmountInt: {
-    color: "#34D399",
-    fontSize: 44,
+    fontSize: 38,
     fontWeight: "900",
-    letterSpacing: -1.2,
-    textShadowColor: "rgba(52, 211, 153, 0.45)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
+    color: "#FFFFFF",
+    letterSpacing: -1,
   },
   heroAmountDec: {
-    color: "#6EE7B7",
     fontSize: 24,
     fontWeight: "800",
+    color: "#E2E8F0",
   },
   heroPeriod: {
-    color: "#A7F3D0",
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#94A3B8",
     marginLeft: 4,
   },
   heroDivider: {
     height: 1,
-    backgroundColor: "rgba(52, 211, 153, 0.15)",
-    marginVertical: 18,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    marginBottom: 14,
   },
   heroFooter: {
     flexDirection: "row",
@@ -663,60 +586,66 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   heroFooterLabel: {
-    color: "#94A3B8",
-    fontSize: 12,
-    marginBottom: 4,
+    fontSize: 11,
     fontWeight: "600",
+    color: "#94A3B8",
+    marginBottom: 4,
   },
   heroAnnualValue: {
-    color: "#38BDF8",
-    fontSize: 16,
-    fontWeight: "900",
-    letterSpacing: -0.3,
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: -0.2,
+  },
+  heroDueValue: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#E2E8F0",
+    letterSpacing: -0.2,
+  },
+  heroDueValueWarning: {
+    color: "#FBBF24",
+  },
+  heroAvgValue: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#93C5FD",
+    letterSpacing: -0.2,
+  },
+  heroVerticalDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    marginHorizontal: 12,
   },
   dueRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
   },
-  dueDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#FBBF24",
-  },
-  heroDueValue: {
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  heroVerticalDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    marginHorizontal: 16,
-  },
+
+  // SHORTCUTS
   shortcutRow: {
     flexDirection: "row",
     gap: 12,
     marginBottom: 24,
   },
-  shortcutPressable: {
-    cursor: "pointer" as any,
-    flex: 1,
-  },
   shortcutCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    padding: 14,
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   shortcutIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    borderWidth: 1,
+    width: 38,
+    height: 38,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primaryLight,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 10,
@@ -724,94 +653,65 @@ const styles = StyleSheet.create({
   shortcutTextWrap: {
     flex: 1,
   },
-  shortcutTitlePlans: {
-    color: "#34D399",
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  shortcutTitleAnalytics: {
-    color: "#A5B4FC",
-    fontSize: 13,
-    fontWeight: "900",
+  shortcutTitle: {
+    fontSize: 13.5,
+    fontWeight: "700",
+    color: theme.colors.text,
+    letterSpacing: -0.2,
   },
   shortcutSubtitle: {
-    color: "#94A3B8",
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    marginTop: 1,
   },
+
+  // SECTION
   sectionWrap: {
-    marginBottom: 24,
+    marginBottom: 26,
   },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
+    marginBottom: 12,
   },
   sectionTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
-  pulsingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#FBBF24",
-    shadowColor: "#FBBF24",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 5,
-  },
-  sectionTitleRenew: {
-    color: "#FBBF24",
-    fontSize: 18,
-    fontWeight: "900",
-    letterSpacing: -0.3,
-  },
-  sectionTitleTracked: {
-    color: "#38BDF8",
-    fontSize: 18,
-    fontWeight: "900",
-    letterSpacing: -0.3,
-  },
-  sectionBadgeWrap: {
-    backgroundColor: "rgba(251, 191, 36, 0.12)",
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "rgba(251, 191, 36, 0.3)",
-  },
-  sectionActionText: {
-    color: "#FBBF24",
-    fontSize: 11,
+  sectionTitle: {
+    fontSize: 16,
     fontWeight: "800",
+    color: theme.colors.text,
+    letterSpacing: -0.3,
   },
   viewAllButton: {
-    cursor: "pointer" as any,
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   viewAllText: {
-    color: "#34D399",
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "700",
+    color: theme.colors.primary,
   },
+
+  // UPCOMING CARDS
   upcomingScroll: {
     gap: 12,
-    paddingRight: 20,
-  },
-  upcomingPressable: {
-    cursor: "pointer" as any,
-    width: 155,
+    paddingRight: 12,
   },
   upcomingCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    width: 170,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
     padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    ...theme.shadows.card,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   upcomingCardTop: {
     flexDirection: "row",
@@ -819,155 +719,142 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 10,
   },
-  dueBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  dueBadgeUrgent: {
-    backgroundColor: "rgba(251, 191, 36, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(251, 191, 36, 0.4)",
-  },
-  dueBadgeNormal: {
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-  },
-  dueBadgeText: {
-    color: "#CBD5E1",
-    fontSize: 10,
-    fontWeight: "800",
-  },
-  dueBadgeTextUrgent: {
-    color: "#FBBF24",
-  },
   upcomingName: {
-    color: "#38BDF8",
     fontSize: 14,
-    fontWeight: "900",
+    fontWeight: "700",
+    color: theme.colors.text,
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
   upcomingPrice: {
-    color: "#34D399",
-    fontSize: 17,
-    fontWeight: "900",
+    fontSize: 16,
+    fontWeight: "800",
+    color: theme.colors.text,
+    letterSpacing: -0.3,
   },
   upcomingCycle: {
-    color: "#94A3B8",
     fontSize: 11,
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
+
+  // SUBSCRIPTION LIST
   subsList: {
     gap: 10,
   },
   subCardPressable: {
-    cursor: "pointer" as any,
-    borderRadius: 18,
+    width: "100%",
   },
   subCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.07)",
-    padding: 14,
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web"
+      ? ({ cursor: "pointer", transition: "background-color 0.15s ease" } as any)
+      : {}),
   },
-  pressedCard: {
-    opacity: 0.85,
-    transform: [{ scale: 0.995 }],
+  subCardPressed: {
+    backgroundColor: theme.colors.backgroundAlt,
+  },
+  subIconWrap: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
   subInfo: {
     flex: 1,
-    marginLeft: 14,
   },
   subName: {
-    color: "#E2E8F0",
-    fontSize: 15,
-    fontWeight: "800",
-    marginBottom: 4,
+    fontSize: 14.5,
+    fontWeight: "700",
+    color: theme.colors.text,
+    letterSpacing: -0.2,
+    marginBottom: 3,
   },
   subMetaRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  subCycleBadge: {
-    backgroundColor: "rgba(16, 185, 129, 0.12)",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.28)",
-  },
   subCycle: {
-    color: "#34D399",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 0.5,
+    fontSize: 11,
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.4,
   },
-  subDot: {
-    color: "#475569",
-    fontSize: 12,
+  subMetaDot: {
+    color: theme.colors.textMuted,
+    fontSize: 10,
   },
   subDueDate: {
-    color: "#94A3B8",
     fontSize: 12,
-    fontWeight: "600",
+    color: theme.colors.textSecondary,
   },
   subDueDateUrgent: {
-    color: "#FBBF24",
+    color: theme.colors.warningText,
     fontWeight: "700",
   },
   subPriceWrap: {
     alignItems: "flex-end",
   },
   subPrice: {
-    color: "#34D399",
-    fontSize: 17,
-    fontWeight: "900",
+    fontSize: 15,
+    fontWeight: "800",
+    color: theme.colors.text,
+    letterSpacing: -0.2,
   },
   subEquivalent: {
-    color: "#6EE7B7",
     fontSize: 11,
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
-  emptyWrap: {
-    backgroundColor: "rgba(18, 29, 48, 0.8)",
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    padding: 30,
+
+  // EMPTY STATE
+  emptyCard: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    padding: 32,
     alignItems: "center",
-    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    ...theme.shadows.subtle,
   },
   emptyTitle: {
-    color: "#38BDF8",
-    fontSize: 18,
-    fontWeight: "900",
-    marginTop: 14,
+    fontSize: 17,
+    fontWeight: "800",
+    color: theme.colors.text,
+    marginTop: 12,
     marginBottom: 6,
   },
   emptySubtitle: {
-    color: "#94A3B8",
-    fontSize: 14,
+    fontSize: 13,
+    color: theme.colors.textSecondary,
     textAlign: "center",
-    lineHeight: 20,
     maxWidth: 280,
+    lineHeight: 18,
     marginBottom: 18,
   },
   emptyButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#10B981",
+    backgroundColor: theme.colors.primary,
     paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 14,
+    paddingVertical: 10,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   emptyButtonText: {
-    color: "#04180F",
-    fontSize: 14,
-    fontWeight: "900",
+    color: "#FFFFFF",
+    fontSize: 13.5,
+    fontWeight: "700",
   },
 });

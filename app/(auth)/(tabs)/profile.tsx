@@ -10,8 +10,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import AppBackground from "@/components/ui/AppBackground";
+import Badge from "@/components/ui/Badge";
+import { theme } from "@/constants/theme";
 import { getSession, signOut } from "@/lib/auth";
 import {
   getMetrics,
@@ -19,8 +23,6 @@ import {
   resetSubscriptionsToDefault,
   Subscription,
 } from "@/lib/subscriptions";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useRouter } from "expo-router";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -105,23 +107,24 @@ export default function ProfileScreen() {
 
             {/* USER AVATAR & IDENTITY */}
             <View style={styles.userCard}>
-              <View style={styles.avatarRing}>
-                <View style={styles.avatarInner}>
-                  <Text style={styles.avatarText}>
-                    {session?.name ? session.name.charAt(0).toUpperCase() : "U"}
-                  </Text>
-                </View>
+              <View style={styles.avatarWrap}>
+                <Text style={styles.avatarText}>
+                  {session?.name ? session.name.charAt(0).toUpperCase() : "U"}
+                </Text>
               </View>
 
-              <Text style={styles.userName}>{session?.name || "Subscriber"}</Text>
+              <Text style={styles.userName}>
+                {session?.name || "Subscriber Member"}
+              </Text>
               <Text style={styles.userEmail}>
                 {session?.email || "subscriber@recurly.app"}
               </Text>
 
-              <View style={styles.planTierBadge}>
-                <Ionicons name="shield-checkmark" size={14} color="#10B981" />
-                <Text style={styles.planTierText}>RECURLY BLACK MEMBER</Text>
-              </View>
+              <Badge
+                label="PRO MEMBER"
+                variant="primary"
+                style={{ marginTop: 10 }}
+              />
             </View>
 
             {/* STATS STRIP */}
@@ -153,7 +156,11 @@ export default function ProfileScreen() {
               <View style={styles.menuRow}>
                 <View style={styles.menuRowLeft}>
                   <View style={styles.menuIcon}>
-                    <Ionicons name="cash-outline" size={18} color="#10B981" />
+                    <Ionicons
+                      name="cash-outline"
+                      size={18}
+                      color={theme.colors.primary}
+                    />
                   </View>
                   <Text style={styles.menuRowText}>Default Currency</Text>
                 </View>
@@ -166,7 +173,7 @@ export default function ProfileScreen() {
                     <Ionicons
                       name="notifications-outline"
                       size={18}
-                      color="#10B981"
+                      color={theme.colors.primary}
                     />
                   </View>
                   <Text style={styles.menuRowText}>Push Notifications</Text>
@@ -177,11 +184,15 @@ export default function ProfileScreen() {
               <View style={[styles.menuRow, { borderBottomWidth: 0 }]}>
                 <View style={styles.menuRowLeft}>
                   <View style={styles.menuIcon}>
-                    <Ionicons name="color-palette-outline" size={18} color="#10B981" />
+                    <Ionicons
+                      name="color-palette-outline"
+                      size={18}
+                      color={theme.colors.primary}
+                    />
                   </View>
                   <Text style={styles.menuRowText}>Theme</Text>
                 </View>
-                <Text style={styles.menuRowValue}>Obsidian Emerald</Text>
+                <Text style={styles.menuRowValue}>SaaS Royal Blue</Text>
               </View>
             </View>
 
@@ -189,39 +200,36 @@ export default function ProfileScreen() {
             <View style={styles.menuCard}>
               <Text style={styles.menuSectionHeader}>DATA & BACKUP</Text>
 
-              <Pressable style={styles.menuRow} onPress={handleResetData}>
+              <Pressable
+                style={styles.menuRow}
+                onPress={handleResetData}
+              >
                 <View style={styles.menuRowLeft}>
-                  <View
-                    style={[
-                      styles.menuIcon,
-                      { backgroundColor: "#151F30" },
-                    ]}
-                  >
+                  <View style={styles.menuIcon}>
                     <Ionicons
                       name="refresh-outline"
                       size={18}
-                      color="#60A5FA"
+                      color={theme.colors.primary}
                     />
                   </View>
                   <Text style={styles.menuRowText}>
                     Restore Sample Subscriptions
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color="#64748B" />
+                <Ionicons
+                  name="chevron-forward"
+                  size={16}
+                  color={theme.colors.textMuted}
+                />
               </Pressable>
 
               <View style={[styles.menuRow, { borderBottomWidth: 0 }]}>
                 <View style={styles.menuRowLeft}>
-                  <View
-                    style={[
-                      styles.menuIcon,
-                      { backgroundColor: "#081D14" },
-                    ]}
-                  >
+                  <View style={styles.menuIcon}>
                     <Ionicons
                       name="cloud-done-outline"
                       size={18}
-                      color="#10B981"
+                      color={theme.colors.primary}
                     />
                   </View>
                   <Text style={styles.menuRowText}>Storage Status</Text>
@@ -232,7 +240,11 @@ export default function ProfileScreen() {
 
             {/* LOGOUT BUTTON */}
             <Pressable style={styles.logoutButton} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color="#FB7185" />
+              <Ionicons
+                name="log-out-outline"
+                size={18}
+                color={theme.colors.error}
+              />
               <Text style={styles.logoutButtonText}>Sign Out of Recurly</Text>
             </Pressable>
           </View>
@@ -243,184 +255,171 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "transparent" },
+  safeArea: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 50 },
   webScrollContent: { alignItems: "center" },
   container: { width: "100%", paddingHorizontal: 20, paddingTop: 16 },
-  webContainer: { maxWidth: 680, paddingTop: 28 },
+  webContainer: { maxWidth: 720, paddingTop: 32, paddingHorizontal: 32 },
+
   header: { marginBottom: 20 },
   headerEyebrow: {
-    color: "#34D399",
+    color: theme.colors.textSecondary,
     fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.5,
+    fontWeight: "700",
+    letterSpacing: 0.8,
     marginBottom: 2,
+    textTransform: "uppercase",
   },
   headerTitle: {
-    color: "#F8FAFC",
-    fontSize: 26,
-    fontWeight: "900",
-    letterSpacing: -0.5,
+    color: theme.colors.text,
+    fontSize: 24,
+    fontWeight: "800",
+    letterSpacing: -0.4,
   },
+
+  // USER CARD
   userCard: {
-    backgroundColor: "rgba(18, 28, 46, 0.7)",
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
     padding: 24,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
     marginBottom: 16,
+    ...theme.shadows.subtle,
   },
-  avatarRing: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: "#081D14",
-    borderWidth: 2,
-    borderColor: "#10B981",
+  avatarWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: theme.colors.primary,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 14,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  avatarInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "#0F3224",
-    alignItems: "center",
-    justifyContent: "center",
+    marginBottom: 12,
+    ...theme.shadows.subtle,
   },
   avatarText: {
     color: "#FFFFFF",
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: "900",
   },
   userName: {
-    color: "#F8FAFC",
-    fontSize: 20,
-    fontWeight: "900",
-    marginBottom: 4,
+    color: theme.colors.text,
+    fontSize: 18,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    marginBottom: 2,
   },
   userEmail: {
-    color: "#94A3B8",
+    color: theme.colors.textSecondary,
     fontSize: 13,
-    marginBottom: 14,
   },
-  planTierBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#081D14",
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#0F462E",
-  },
-  planTierText: {
-    color: "#34D399",
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 0.8,
-  },
+
+  // STATS STRIP
   statsStrip: {
     flexDirection: "row",
-    backgroundColor: "rgba(18, 28, 46, 0.75)",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    padding: 16,
-    marginBottom: 18,
     alignItems: "center",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    marginBottom: 16,
+    ...theme.shadows.subtle,
   },
   statCol: {
     flex: 1,
     alignItems: "center",
   },
   statNum: {
-    color: "#F8FAFC",
+    color: theme.colors.text,
     fontSize: 18,
-    fontWeight: "900",
-    marginBottom: 2,
+    fontWeight: "800",
+    letterSpacing: -0.3,
   },
   statLabel: {
-    color: "#64748B",
-    fontSize: 11,
-    textAlign: "center",
+    color: theme.colors.textSecondary,
+    fontSize: 11.5,
+    marginTop: 2,
   },
   statDivider: {
     width: 1,
     height: 28,
-    backgroundColor: "#1E2533",
+    backgroundColor: theme.colors.cardBorder,
   },
+
+  // MENU CARD
   menuCard: {
-    backgroundColor: "rgba(18, 28, 46, 0.7)",
-    borderRadius: 20,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    paddingHorizontal: 18,
+    paddingTop: 16,
+    paddingBottom: 6,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.07)",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderColor: theme.colors.cardBorder,
     marginBottom: 16,
+    ...theme.shadows.subtle,
   },
   menuSectionHeader: {
-    color: "#64748B",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1,
-    marginBottom: 12,
-    paddingTop: 4,
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    textTransform: "uppercase",
   },
   menuRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 13,
     borderBottomWidth: 1,
-    borderBottomColor: "#161D2A",
+    borderBottomColor: theme.colors.divider,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   menuRowLeft: {
     flexDirection: "row",
     alignItems: "center",
   },
   menuIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: "#081D14",
+    width: 34,
+    height: 34,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.primaryLight,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
   },
   menuRowText: {
-    color: "#F8FAFC",
+    color: theme.colors.text,
     fontSize: 14,
-    fontWeight: "700",
-  },
-  menuRowValue: {
-    color: "#94A3B8",
-    fontSize: 13,
     fontWeight: "600",
   },
+  menuRowValue: {
+    color: theme.colors.textSecondary,
+    fontSize: 13,
+    fontWeight: "500",
+  },
+
+  // LOGOUT
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "rgba(28, 17, 23, 0.85)",
+    backgroundColor: theme.colors.errorBg,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: "#3D1A28",
-    borderRadius: 16,
-    height: 54,
-    marginTop: 6,
+    borderColor: theme.colors.errorBorder,
+    height: 48,
+    marginTop: 4,
+    marginBottom: 24,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   logoutButtonText: {
-    color: "#FB7185",
-    fontSize: 15,
-    fontWeight: "800",
+    color: theme.colors.errorText,
+    fontSize: 13.5,
+    fontWeight: "700",
   },
 });

@@ -1,43 +1,39 @@
-import { Platform, useWindowDimensions } from "react-native";
+import React from "react";
+import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
+import { theme } from "@/constants/theme";
 
 export default function TabLayout() {
-  const { width } = useWindowDimensions();
-  const isWebDesktop = Platform.OS === "web" && width > 768;
-
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#34D399",
-        tabBarInactiveTintColor: "#64748B",
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: isWebDesktop ? "rgba(10, 17, 30, 0.92)" : "#060A13",
-          borderTopColor: isWebDesktop ? "rgba(52, 211, 153, 0.3)" : "rgba(255, 255, 255, 0.07)",
-          borderWidth: isWebDesktop ? 1 : 0,
+          backgroundColor: theme.colors.card,
+          borderTopColor: theme.colors.cardBorder,
           borderTopWidth: 1,
-          borderColor: isWebDesktop ? "rgba(52, 211, 153, 0.3)" : "transparent",
-          borderRadius: isWebDesktop ? 26 : 0,
-          position: isWebDesktop ? "absolute" : undefined,
-          bottom: isWebDesktop ? 22 : 0,
-          left: isWebDesktop ? "50%" : 0,
-          transform: isWebDesktop ? [{ translateX: -270 }] : undefined,
-          width: isWebDesktop ? 540 : "100%",
-          height: isWebDesktop ? 64 : 68,
+          height: Platform.OS === "ios" ? 84 : 64,
           paddingTop: 8,
-          paddingBottom: 8,
-          elevation: 20,
-          shadowColor: isWebDesktop ? "#10B981" : "#000000",
-          shadowOffset: { width: 0, height: isWebDesktop ? 8 : -6 },
-          shadowOpacity: isWebDesktop ? 0.35 : 0.6,
-          shadowRadius: 24,
+          paddingBottom: Platform.OS === "ios" ? 28 : 10,
+          elevation: 4,
+          shadowColor: theme.colors.darkNavy,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          ...(Platform.OS === "web"
+            ? ({
+                boxShadow: "0 -1px 3px 0 rgba(15, 23, 42, 0.04)",
+              } as any)
+            : {}),
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "800",
-          marginTop: 3,
-          letterSpacing: 0.3,
+          fontSize: 12,
+          fontWeight: "600",
+          marginTop: 2,
+          letterSpacing: -0.2,
         },
       }}
     >

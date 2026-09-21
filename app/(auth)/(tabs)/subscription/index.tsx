@@ -13,21 +13,22 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useFocusEffect, useRouter } from "expo-router";
 
 import AppBackground from "@/components/ui/AppBackground";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import Illustration from "@/components/ui/Illustration";
+import Badge from "@/components/ui/Badge";
+import { theme } from "@/constants/theme";
 import {
   addSubscription,
   BillingCycle,
   calculateMonthlyEquivalent,
-  getDaysUntilDue,
   getSubscriptions,
   Subscription,
   SubscriptionCategory,
 } from "@/lib/subscriptions";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useFocusEffect, useRouter } from "expo-router";
 
 const CATEGORIES: { id: "all" | SubscriptionCategory; label: string }[] = [
   { id: "all", label: "All Plans" },
@@ -156,7 +157,7 @@ export default function SubscriptionsCatalog() {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#10B981"
+              tintColor={theme.colors.primary}
             />
           }
         >
@@ -173,24 +174,32 @@ export default function SubscriptionsCatalog() {
                 onPress={() => setModalVisible(true)}
                 accessibilityLabel="Add New Plan"
               >
-                <Ionicons name="add" size={20} color="#000000" />
+                <Ionicons name="add" size={18} color="#FFFFFF" />
                 <Text style={styles.addButtonText}>Add Plan</Text>
               </Pressable>
             </View>
 
             {/* SEARCH BAR */}
             <View style={styles.searchWrap}>
-              <Ionicons name="search-outline" size={18} color="#64748B" />
+              <Ionicons
+                name="search-outline"
+                size={18}
+                color={theme.colors.textMuted}
+              />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search by name or category..."
-                placeholderTextColor="#64748B"
+                placeholder="Search subscriptions or category..."
+                placeholderTextColor={theme.colors.inputPlaceholder}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
               {searchQuery.length > 0 && (
                 <Pressable onPress={() => setSearchQuery("")}>
-                  <Ionicons name="close-circle" size={18} color="#64748B" />
+                  <Ionicons
+                    name="close-circle"
+                    size={18}
+                    color={theme.colors.textMuted}
+                  />
                 </Pressable>
               )}
             </View>
@@ -237,7 +246,7 @@ export default function SubscriptionsCatalog() {
               <View style={styles.summaryDivider} />
               <View style={styles.summaryCol}>
                 <Text style={styles.summaryLabel}>FILTER TOTAL</Text>
-                <Text style={styles.summaryValueEmerald}>
+                <Text style={styles.summaryValueBlue}>
                   {formatCurrency(totalMonthlySpend)}
                   <Text style={styles.summarySub}>/mo</Text>
                 </Text>
@@ -249,14 +258,13 @@ export default function SubscriptionsCatalog() {
               <View style={styles.emptyState}>
                 <Illustration
                   name="empty-state-no-subscriptions"
-                  width={180}
-                  height={180}
+                  width={170}
+                  height={170}
                 />
-                <Text style={styles.emptyStateTitle}>No Matches Found</Text>
+                <Text style={styles.emptyStateTitle}>No Results Found</Text>
                 <Text style={styles.emptyStateDesc}>
-                  {searchQuery
-                    ? `No subscriptions found matching "${searchQuery}".`
-                    : "No subscriptions under this category yet."}
+                  Try clearing your search query or selecting a different
+                  category filter.
                 </Text>
                 <Pressable
                   style={styles.clearFilterButton}
@@ -269,11 +277,9 @@ export default function SubscriptionsCatalog() {
                 </Pressable>
               </View>
             ) : (
-              <View style={styles.listWrap}>
+              <View style={styles.plansList}>
                 {filtered.map((sub) => {
-                  const daysLeft = getDaysUntilDue(sub.nextPaymentDate);
                   const monthly = calculateMonthlyEquivalent(sub);
-
                   return (
                     <Pressable
                       key={sub.id}
@@ -288,257 +294,259 @@ export default function SubscriptionsCatalog() {
                         })
                       }
                     >
-                      <CategoryIcon category={sub.category} size={48} />
+                      <View style={styles.planIconWrap}>
+                        <CategoryIcon category={sub.category} size={42} />
+                      </View>
 
-                      <View style={styles.planCardMiddle}>
-                        <Text style={styles.planName}>{sub.name}</Text>
-                        <View style={styles.planBadgeRow}>
-                          <View style={styles.categoryBadge}>
-                            <Text style={styles.categoryBadgeText}>
-                              {sub.category.toUpperCase()}
-                            </Text>
-                          </View>
-                          <Text style={styles.planCycle}>
-                            • {sub.billingCycle}
-                          </Text>
+                      <View style={styles.planInfo}>
+                        <View style={styles.planNameRow}>
+                          <Text style={styles.planName}>{sub.name}</Text>
+                          <Badge
+                            label={sub.active ? "Active" : "Paused"}
+                            variant={sub.active ? "success" : "neutral"}
+                          />
                         </View>
-                        <Text
-                          style={[
-                            styles.planRenewal,
-                            daysLeft <= 3 && { color: "#FBBF24" },
-                          ]}
-                        >
-                          Renewal:{" "}
-                          {daysLeft <= 0 ? "Due today" : `in ${daysLeft} days`}
+                        <Text style={styles.planSubmeta}>
+                          Renews {sub.nextPaymentDate} • {sub.paymentMethod}
                         </Text>
                       </View>
 
-                      <View style={styles.planCardRight}>
+                      <View style={styles.planPriceCol}>
                         <Text style={styles.planPrice}>
                           {formatCurrency(sub.price)}
                         </Text>
-                        {sub.billingCycle !== "monthly" && (
-                          <Text style={styles.planSubPrice}>
-                            ≈ {formatCurrency(monthly)}/mo
-                          </Text>
-                        )}
-                        <Ionicons
-                          name="chevron-forward"
-                          size={17}
-                          color="#475569"
-                          style={{ alignSelf: "flex-end", marginTop: 8 }}
-                        />
+                        <Text style={styles.planSubPrice}>
+                          {sub.billingCycle}
+                        </Text>
                       </View>
+
+                      <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color={theme.colors.textMuted}
+                        style={{ marginLeft: 8 }}
+                      />
                     </Pressable>
                   );
                 })}
               </View>
             )}
-          </View>
-        </ScrollView>
 
-        {/* ADD SUBSCRIPTION MODAL */}
-        <Modal
-          visible={modalVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <SafeAreaView style={styles.modalSafeArea}>
-              <View style={styles.modalContainer}>
-                <View style={styles.modalHeader}>
-                  <View>
-                    <Text style={styles.modalEyebrow}>NEW SUBSCRIPTION</Text>
-                    <Text style={styles.modalTitle}>Add Plan</Text>
-                  </View>
-                  <Pressable
-                    style={styles.modalCloseButton}
-                    onPress={() => setModalVisible(false)}
-                  >
-                    <Ionicons name="close" size={20} color="#FFFFFF" />
-                  </Pressable>
-                </View>
-
-                <ScrollView
-                  showsVerticalScrollIndicator={false}
-                  contentContainerStyle={styles.modalScroll}
-                >
-                  {/* SERVICE NAME */}
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>SERVICE / PLAN NAME</Text>
-                    <View style={styles.modalInputWrap}>
+            {/* ADD SUBSCRIPTION MODAL */}
+            <Modal
+              visible={modalVisible}
+              animationType="slide"
+              transparent={true}
+              onRequestClose={() => setModalVisible(false)}
+            >
+              <View style={styles.modalOverlay}>
+                <View style={styles.modalContainer}>
+                  {/* MODAL HEADER */}
+                  <View style={styles.modalHeader}>
+                    <View>
+                      <Text style={styles.modalEyebrow}>NEW RECORD</Text>
+                      <Text style={styles.modalTitle}>Add Subscription</Text>
+                    </View>
+                    <Pressable
+                      style={styles.modalCloseButton}
+                      onPress={() => setModalVisible(false)}
+                    >
                       <Ionicons
-                        name="cube-outline"
+                        name="close"
                         size={20}
-                        color="#64748B"
+                        color={theme.colors.textSecondary}
                       />
-                      <TextInput
-                        style={styles.modalInput}
-                        placeholder="e.g. Disney+, Figma, Amazon Prime"
-                        placeholderTextColor="#64748B"
-                        value={newPlanName}
-                        onChangeText={setNewPlanName}
-                      />
-                    </View>
+                    </Pressable>
                   </View>
 
-                  {/* CATEGORY PICKER */}
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>CATEGORY</Text>
-                    <View style={styles.categoryPickerWrap}>
-                      {(
-                        [
-                          "streaming",
-                          "music",
-                          "software",
-                          "cloud",
-                          "fitness",
-                          "gaming",
-                          "reading",
-                          "utilities",
-                        ] as SubscriptionCategory[]
-                      ).map((cat) => {
-                        const isSel = newPlanCategory === cat;
-                        return (
-                          <Pressable
-                            key={cat}
-                            style={[
-                              styles.pickerItem,
-                              isSel && styles.pickerItemActive,
-                            ]}
-                            onPress={() => setNewPlanCategory(cat)}
-                          >
-                            <CategoryIcon category={cat} size={30} />
-                            <Text
-                              style={[
-                                styles.pickerItemText,
-                                isSel && styles.pickerItemTextActive,
-                              ]}
-                            >
-                              {cat}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                    </View>
-                  </View>
-
-                  {/* PRICE & CYCLE */}
-                  <View style={styles.twoColRow}>
-                    <View style={[styles.fieldGroup, { flex: 1 }]}>
-                      <Text style={styles.fieldLabel}>PRICE ($)</Text>
+                  <ScrollView
+                    contentContainerStyle={styles.modalScroll}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {/* NAME */}
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>SERVICE NAME</Text>
                       <View style={styles.modalInputWrap}>
-                        <Text style={{ color: "#10B981", fontWeight: "800" }}>
-                          $
-                        </Text>
+                        <Ionicons
+                          name="business-outline"
+                          size={18}
+                          color={theme.colors.textMuted}
+                        />
                         <TextInput
                           style={styles.modalInput}
-                          placeholder="14.99"
-                          placeholderTextColor="#64748B"
-                          value={newPlanPrice}
-                          onChangeText={setNewPlanPrice}
-                          keyboardType="decimal-pad"
+                          placeholder="e.g. Netflix, Spotify, Figma"
+                          placeholderTextColor={theme.colors.inputPlaceholder}
+                          value={newPlanName}
+                          onChangeText={setNewPlanName}
                         />
                       </View>
                     </View>
 
-                    <View style={[styles.fieldGroup, { flex: 1.2 }]}>
-                      <Text style={styles.fieldLabel}>CYCLE</Text>
-                      <View style={styles.cyclePickerRow}>
-                        {BILLING_CYCLES.map((c) => (
-                          <Pressable
-                            key={c.id}
-                            style={[
-                              styles.cyclePill,
-                              newPlanCycle === c.id && styles.cyclePillActive,
-                            ]}
-                            onPress={() => setNewPlanCycle(c.id)}
-                          >
-                            <Text
+                    {/* CATEGORY PICKER */}
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>CATEGORY</Text>
+                      <View style={styles.categoryPickerWrap}>
+                        {(CATEGORIES.filter((c) => c.id !== "all") as {
+                          id: SubscriptionCategory;
+                          label: string;
+                        }[]).map((cat) => {
+                          const isSelected = newPlanCategory === cat.id;
+                          return (
+                            <Pressable
+                              key={cat.id}
                               style={[
-                                styles.cyclePillText,
-                                newPlanCycle === c.id &&
-                                  styles.cyclePillTextActive,
+                                styles.pickerItem,
+                                isSelected && styles.pickerItemActive,
                               ]}
+                              onPress={() => setNewPlanCategory(cat.id)}
                             >
-                              {c.label}
-                            </Text>
-                          </Pressable>
-                        ))}
+                              <CategoryIcon category={cat.id} size={20} />
+                              <Text
+                                style={[
+                                  styles.pickerItemText,
+                                  isSelected && styles.pickerItemTextActive,
+                                ]}
+                              >
+                                {cat.label}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
                       </View>
                     </View>
-                  </View>
 
-                  {/* PAYMENT METHOD */}
-                  <View style={styles.fieldGroup}>
-                    <Text style={styles.fieldLabel}>PAYMENT METHOD</Text>
-                    <View style={styles.modalInputWrap}>
+                    {/* PRICE & CYCLE */}
+                    <View style={styles.twoColRow}>
+                      <View style={[styles.fieldGroup, { flex: 1 }]}>
+                        <Text style={styles.fieldLabel}>PRICE ($)</Text>
+                        <View style={styles.modalInputWrap}>
+                          <Text
+                            style={{
+                              color: theme.colors.primary,
+                              fontWeight: "800",
+                              fontSize: 16,
+                            }}
+                          >
+                            $
+                          </Text>
+                          <TextInput
+                            style={styles.modalInput}
+                            placeholder="14.99"
+                            placeholderTextColor={theme.colors.inputPlaceholder}
+                            value={newPlanPrice}
+                            onChangeText={setNewPlanPrice}
+                            keyboardType="decimal-pad"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={[styles.fieldGroup, { flex: 1.2 }]}>
+                        <Text style={styles.fieldLabel}>BILLING CYCLE</Text>
+                        <View style={styles.cyclePickerRow}>
+                          {BILLING_CYCLES.map((c) => (
+                            <Pressable
+                              key={c.id}
+                              style={[
+                                styles.cyclePill,
+                                newPlanCycle === c.id && styles.cyclePillActive,
+                              ]}
+                              onPress={() => setNewPlanCycle(c.id)}
+                            >
+                              <Text
+                                style={[
+                                  styles.cyclePillText,
+                                  newPlanCycle === c.id &&
+                                    styles.cyclePillTextActive,
+                                ]}
+                              >
+                                {c.label}
+                              </Text>
+                            </Pressable>
+                          ))}
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* PAYMENT METHOD */}
+                    <View style={styles.fieldGroup}>
+                      <Text style={styles.fieldLabel}>PAYMENT METHOD</Text>
+                      <View style={styles.modalInputWrap}>
+                        <Ionicons
+                          name="card-outline"
+                          size={18}
+                          color={theme.colors.textMuted}
+                        />
+                        <TextInput
+                          style={styles.modalInput}
+                          placeholder="e.g. Apple Pay, Visa •• 4291"
+                          placeholderTextColor={theme.colors.inputPlaceholder}
+                          value={newPlanPaymentMethod}
+                          onChangeText={setNewPlanPaymentMethod}
+                        />
+                      </View>
+                    </View>
+
+                    {/* REMINDER TOGGLE */}
+                    <Pressable
+                      style={styles.reminderToggleRow}
+                      onPress={() => setNewPlanRemind(!newPlanRemind)}
+                    >
+                      <View style={styles.reminderToggleCopy}>
+                        <Text style={styles.reminderToggleTitle}>
+                          Renewal Reminder
+                        </Text>
+                        <Text style={styles.reminderToggleSubtitle}>
+                          Notify me 48 hours prior
+                        </Text>
+                      </View>
                       <Ionicons
-                        name="card-outline"
-                        size={20}
-                        color="#64748B"
+                        name={
+                          newPlanRemind
+                            ? "checkmark-circle"
+                            : "ellipse-outline"
+                        }
+                        size={24}
+                        color={
+                          newPlanRemind
+                            ? theme.colors.primary
+                            : theme.colors.textMuted
+                        }
                       />
-                      <TextInput
-                        style={styles.modalInput}
-                        placeholder="e.g. Apple Pay, Visa •• 4291"
-                        placeholderTextColor="#64748B"
-                        value={newPlanPaymentMethod}
-                        onChangeText={setNewPlanPaymentMethod}
+                    </Pressable>
+
+                    {/* SUBMIT BUTTON */}
+                    <Pressable
+                      style={styles.savePlanButton}
+                      onPress={handleCreateSubscription}
+                    >
+                      <Text style={styles.savePlanButtonText}>
+                        Save Subscription
+                      </Text>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={18}
+                        color="#FFFFFF"
                       />
-                    </View>
-                  </View>
-
-                  {/* REMINDER TOGGLE */}
-                  <Pressable
-                    style={styles.reminderToggleRow}
-                    onPress={() => setNewPlanRemind(!newPlanRemind)}
-                  >
-                    <View style={styles.reminderToggleCopy}>
-                      <Text style={styles.reminderToggleTitle}>
-                        Renewal Reminder
-                      </Text>
-                      <Text style={styles.reminderToggleSubtitle}>
-                        Notify me 48 hours prior
-                      </Text>
-                    </View>
-                    <Ionicons
-                      name={
-                        newPlanRemind
-                          ? "checkmark-circle"
-                          : "ellipse-outline"
-                      }
-                      size={26}
-                      color={newPlanRemind ? "#10B981" : "#64748B"}
-                    />
-                  </Pressable>
-
-                  {/* SUBMIT BUTTON */}
-                  <Pressable
-                    style={styles.savePlanButton}
-                    onPress={handleCreateSubscription}
-                  >
-                    <Text style={styles.savePlanButtonText}>
-                      Save Subscription
-                    </Text>
-                    <Ionicons name="arrow-forward" size={18} color="#000000" />
-                  </Pressable>
-                </ScrollView>
+                    </Pressable>
+                  </ScrollView>
+                </View>
               </View>
-            </SafeAreaView>
+            </Modal>
           </View>
-        </Modal>
+        </ScrollView>
       </SafeAreaView>
     </AppBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "transparent" },
+  safeArea: { flex: 1 },
   scrollContent: { flexGrow: 1, paddingBottom: 50 },
   webScrollContent: { alignItems: "center" },
   container: { width: "100%", paddingHorizontal: 20, paddingTop: 16 },
-  webContainer: { maxWidth: 680, paddingTop: 28 },
+  webContainer: { maxWidth: 920, paddingTop: 32, paddingHorizontal: 32 },
+
+  // HEADER
   headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -546,239 +554,253 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   headerEyebrow: {
-    color: "#34D399",
     fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.5,
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.8,
     marginBottom: 2,
+    textTransform: "uppercase",
   },
   headerTitle: {
-    color: "#F8FAFC",
-    fontSize: 26,
-    fontWeight: "900",
-    letterSpacing: -0.5,
+    fontSize: 24,
+    fontWeight: "800",
+    color: theme.colors.text,
+    letterSpacing: -0.4,
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#10B981",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 14,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   addButtonText: {
-    color: "#04180F",
-    fontSize: 13,
-    fontWeight: "900",
+    color: "#FFFFFF",
+    fontSize: 13.5,
+    fontWeight: "700",
   },
+
+  // SEARCH
   searchWrap: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(18, 28, 46, 0.75)",
-    borderRadius: 16,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    paddingHorizontal: 14,
-    height: 48,
-    marginBottom: 14,
+    borderColor: theme.colors.cardBorder,
+    paddingHorizontal: 12,
+    height: 44,
     gap: 10,
+    marginBottom: 14,
+    ...theme.shadows.subtle,
   },
   searchInput: {
     flex: 1,
-    color: "#F8FAFC",
     fontSize: 14,
+    color: theme.colors.text,
+    height: "100%",
   },
+
+  // CATEGORIES
   categoriesRow: {
     gap: 8,
     paddingBottom: 14,
   },
   categoryPill: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: "rgba(18, 28, 46, 0.6)",
+    paddingVertical: 7,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.07)",
+    borderColor: theme.colors.cardBorder,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   categoryPillActive: {
-    backgroundColor: "rgba(16, 185, 129, 0.15)",
-    borderColor: "#34D399",
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   categoryPillText: {
-    color: "#94A3B8",
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "600",
+    color: theme.colors.textSecondary,
   },
   categoryPillTextActive: {
-    color: "#34D399",
-    fontWeight: "900",
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
+
+  // SUMMARY STRIP
   summaryStrip: {
     flexDirection: "row",
-    backgroundColor: "rgba(18, 28, 46, 0.75)",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.08)",
-    padding: 14,
-    marginBottom: 18,
     alignItems: "center",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.md,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    marginBottom: 16,
+    ...theme.shadows.subtle,
   },
-  summaryCol: { flex: 1 },
-  summaryDivider: {
-    width: 1,
-    height: 28,
-    backgroundColor: "#1E2533",
-    marginHorizontal: 12,
+  summaryCol: {
+    flex: 1,
   },
   summaryLabel: {
-    color: "#64748B",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1,
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: theme.colors.textMuted,
+    letterSpacing: 0.8,
     marginBottom: 2,
+    textTransform: "uppercase",
   },
   summaryValue: {
-    color: "#38BDF8",
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "700",
+    color: theme.colors.text,
   },
-  summaryValueEmerald: {
-    color: "#34D399",
-    fontSize: 17,
-    fontWeight: "900",
+  summaryValueBlue: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: theme.colors.primary,
   },
   summarySub: {
-    color: "#64748B",
     fontSize: 12,
     fontWeight: "600",
+    color: theme.colors.textSecondary,
   },
-  listWrap: {
+  summaryDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: theme.colors.cardBorder,
+    marginHorizontal: 12,
+  },
+
+  // LIST
+  plansList: {
     gap: 10,
   },
   planCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(18, 28, 46, 0.7)",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.07)",
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.lg,
     padding: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web"
+      ? ({ cursor: "pointer", transition: "background-color 0.15s ease" } as any)
+      : {}),
   },
   planCardPressed: {
-    opacity: 0.8,
-    backgroundColor: "#141A24",
+    backgroundColor: theme.colors.backgroundAlt,
   },
-  planCardMiddle: {
+  planIconWrap: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  planInfo: {
     flex: 1,
-    marginLeft: 14,
   },
-  planName: {
-    color: "#F8FAFC",
-    fontSize: 15,
-    fontWeight: "800",
-    marginBottom: 4,
-  },
-  planBadgeRow: {
+  planNameRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
     marginBottom: 4,
   },
-  categoryBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: "#081D14",
-    borderWidth: 1,
-    borderColor: "#0F462E",
+  planName: {
+    fontSize: 14.5,
+    fontWeight: "700",
+    color: theme.colors.text,
+    letterSpacing: -0.2,
   },
-  categoryBadgeText: {
-    color: "#34D399",
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 0.5,
+  planSubmeta: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
   },
-  planCycle: {
-    color: "#64748B",
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  planRenewal: {
-    color: "#94A3B8",
-    fontSize: 11,
-  },
-  planCardRight: {
+  planPriceCol: {
     alignItems: "flex-end",
-    marginLeft: 10,
   },
   planPrice: {
-    color: "#34D399",
-    fontSize: 16,
-    fontWeight: "900",
+    fontSize: 15,
+    fontWeight: "800",
+    color: theme.colors.text,
+    letterSpacing: -0.2,
   },
   planSubPrice: {
-    color: "#6EE7B7",
     fontSize: 11,
+    color: theme.colors.textSecondary,
+    textTransform: "capitalize",
     marginTop: 2,
   },
+
+  // EMPTY
   emptyState: {
-    backgroundColor: "rgba(18, 28, 46, 0.7)",
-    borderRadius: 22,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    padding: 32,
     borderWidth: 1,
-    borderColor: "#1E2533",
-    padding: 30,
+    borderColor: theme.colors.cardBorder,
     alignItems: "center",
+    ...theme.shadows.subtle,
   },
   emptyStateTitle: {
-    color: "#F8FAFC",
-    fontSize: 18,
-    fontWeight: "900",
-    marginTop: 14,
+    fontSize: 17,
+    fontWeight: "800",
+    color: theme.colors.text,
+    marginTop: 12,
     marginBottom: 6,
   },
   emptyStateDesc: {
-    color: "#64748B",
     fontSize: 13,
+    color: theme.colors.textSecondary,
     textAlign: "center",
     maxWidth: 280,
     lineHeight: 18,
     marginBottom: 18,
   },
   clearFilterButton: {
-    backgroundColor: "#161D2A",
+    backgroundColor: theme.colors.primaryLight,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 9,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryBorder,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   clearFilterText: {
-    color: "#10B981",
+    color: theme.colors.primary,
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "700",
   },
-  // MODAL STYLES
+
+  // MODAL
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.88)",
-    justifyContent: "flex-end",
-  },
-  modalSafeArea: {
-    flex: 1,
-    justifyContent: "flex-end",
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    justifyContent: Platform.OS === "web" ? "center" : "flex-end",
+    alignItems: Platform.OS === "web" ? "center" : undefined,
+    padding: Platform.OS === "web" ? 20 : 0,
   },
   modalContainer: {
-    backgroundColor: "#080E1A",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    backgroundColor: theme.colors.card,
+    width: "100%",
+    maxWidth: 520,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: Platform.OS === "web" ? 24 : 0,
+    borderBottomRightRadius: Platform.OS === "web" ? 24 : 0,
     borderWidth: 1,
-    borderColor: "#1E2533",
-    maxHeight: "90%",
+    borderColor: theme.colors.cardBorder,
+    maxHeight: Platform.OS === "web" ? ("85vh" as any) : "90%",
     paddingBottom: 24,
+    ...theme.shadows.modal,
   },
   modalHeader: {
     flexDirection: "row",
@@ -786,29 +808,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 22,
     paddingTop: 20,
-    paddingBottom: 14,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#1E2533",
+    borderBottomColor: theme.colors.divider,
   },
   modalEyebrow: {
-    color: "#10B981",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.4,
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
   },
   modalTitle: {
-    color: "#F8FAFC",
-    fontSize: 22,
-    fontWeight: "900",
+    fontSize: 20,
+    fontWeight: "800",
+    color: theme.colors.text,
     marginTop: 2,
+    letterSpacing: -0.3,
   },
   modalCloseButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#161D2A",
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: theme.colors.backgroundAlt,
     alignItems: "center",
     justifyContent: "center",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   modalScroll: {
     paddingHorizontal: 22,
@@ -817,29 +842,31 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   fieldGroup: {
-    gap: 8,
+    gap: 6,
   },
   fieldLabel: {
-    color: "#94A3B8",
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1,
+    color: theme.colors.text,
+    fontSize: 11.5,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
   modalInputWrap: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#0D1117",
-    borderRadius: 14,
+    backgroundColor: theme.colors.inputBg,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: "#1E2533",
-    paddingHorizontal: 14,
-    height: 50,
-    gap: 10,
+    borderColor: theme.colors.inputBorder,
+    paddingHorizontal: 12,
+    height: 46,
+    gap: 8,
   },
   modalInput: {
     flex: 1,
-    color: "#FFFFFF",
+    color: theme.colors.text,
     fontSize: 14,
+    height: "100%",
   },
   categoryPickerWrap: {
     flexDirection: "row",
@@ -849,27 +876,28 @@ const styles = StyleSheet.create({
   pickerItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "#0D1117",
+    gap: 6,
+    backgroundColor: theme.colors.backgroundAlt,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: theme.colors.cardBorder,
     paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 12,
+    paddingVertical: 7,
+    borderRadius: theme.borderRadius.sm,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   pickerItemActive: {
-    backgroundColor: "#0E241B",
-    borderColor: "#10B981",
+    backgroundColor: theme.colors.primaryLight,
+    borderColor: theme.colors.primary,
   },
   pickerItemText: {
-    color: "#94A3B8",
+    color: theme.colors.textSecondary,
     fontSize: 12,
     textTransform: "capitalize",
-    fontWeight: "700",
+    fontWeight: "600",
   },
   pickerItemTextActive: {
-    color: "#10B981",
-    fontWeight: "900",
+    color: theme.colors.primary,
+    fontWeight: "700",
   },
   twoColRow: {
     flexDirection: "row",
@@ -878,69 +906,68 @@ const styles = StyleSheet.create({
   cyclePickerRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 4,
+    gap: 6,
   },
   cyclePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "#0D1117",
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.backgroundAlt,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: theme.colors.cardBorder,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   cyclePillActive: {
-    backgroundColor: "#10B981",
-    borderColor: "#10B981",
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   cyclePillText: {
-    color: "#94A3B8",
+    color: theme.colors.textSecondary,
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "600",
   },
   cyclePillTextActive: {
-    color: "#000000",
-    fontWeight: "900",
+    color: "#FFFFFF",
+    fontWeight: "700",
   },
   reminderToggleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#0D1117",
-    borderRadius: 14,
+    backgroundColor: theme.colors.backgroundAlt,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: "#1E2533",
-    padding: 14,
+    borderColor: theme.colors.cardBorder,
+    padding: 12,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   reminderToggleCopy: {
     gap: 2,
   },
   reminderToggleTitle: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "800",
+    color: theme.colors.text,
+    fontSize: 13.5,
+    fontWeight: "700",
   },
   reminderToggleSubtitle: {
-    color: "#64748B",
-    fontSize: 12,
+    color: theme.colors.textSecondary,
+    fontSize: 11.5,
   },
   savePlanButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "#10B981",
-    height: 54,
-    borderRadius: 16,
+    backgroundColor: theme.colors.primary,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
     marginTop: 6,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 5,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   savePlanButtonText: {
-    color: "#000000",
-    fontSize: 15,
-    fontWeight: "900",
+    color: "#FFFFFF",
+    fontSize: 14.5,
+    fontWeight: "700",
   },
 });

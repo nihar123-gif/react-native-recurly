@@ -6,9 +6,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 
 html, body, #root {
-  background-color: #04070D !important;
+  background-color: #F8FAFC !important;
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  color: #F8FAFC;
+  color: #0F172A;
   margin: 0;
   padding: 0;
   min-height: 100vh;
@@ -16,18 +16,18 @@ html, body, #root {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Executive Obsidian Scrollbar for Web Browser */
+/* Custom Clean Minimal Scrollbar for Web Browser */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #060A13;
+  background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E2C44;
+  background: #CBD5E1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #34D399;
+  background: #94A3B8;
 }

@@ -2,21 +2,25 @@ import "@/global.css";
 
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-
-import AppBackground from "@/components/ui/AppBackground";
-import { signInUser } from "@/lib/auth";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+
+import AppBackground from "@/components/ui/AppBackground";
+import Badge from "@/components/ui/Badge";
+import { theme } from "@/constants/theme";
+import { signInUser } from "@/lib/auth";
 
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === "web") {
@@ -33,12 +37,15 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedInput, setFocusedInput] = useState<
+    "email" | "password" | null
+  >(null);
 
   const handleSignIn = async () => {
     if (isSubmitting) return;
 
     if (!email.trim()) {
-      showAlert("Required", "Please enter your email.");
+      showAlert("Required", "Please enter your email address.");
       return;
     }
 
@@ -76,95 +83,175 @@ export default function SignIn() {
           style={styles.keyboardView}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
-          <View style={styles.container}>
-            <Pressable
-              style={styles.backButton}
-              onPress={() => router.back()}
-              accessibilityLabel="Go back"
-            >
-              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
-              <Text style={styles.backText}>Back</Text>
-            </Pressable>
-
-            <View style={styles.logoContainer}>
-              <View style={styles.logoCircle}>
-                <Ionicons name="layers" size={36} color="#000000" />
-              </View>
-
-              <Text style={styles.title}>Welcome Back</Text>
-              <Text style={styles.subtitle}>
-                Sign in to manage your subscription portfolio
-              </Text>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>EMAIL ADDRESS</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="mail-outline" size={20} color="#94A3B8" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor="#94A3B8"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>PASSWORD</Text>
-              <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#94A3B8" />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your password"
-                  placeholderTextColor="#94A3B8"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                />
-                <Pressable onPress={() => setShowPassword(!showPassword)}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.centerContainer}>
+              {/* TOP NAVIGATION ROW */}
+              <View style={styles.topNavRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.backButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={() => router.back()}
+                  accessibilityLabel="Go back"
+                >
                   <Ionicons
-                    name={showPassword ? "eye-outline" : "eye-off-outline"}
-                    size={20}
-                    color="#94A3B8"
+                    name="arrow-back"
+                    size={18}
+                    color={theme.colors.text}
                   />
+                  <Text style={styles.backText}>Back</Text>
                 </Pressable>
+
+                <Badge label="256-Bit SSL" variant="primary" dot />
+              </View>
+
+              {/* CENTERED SAAS CARD */}
+              <View style={styles.card}>
+                {/* BRAND HEADER */}
+                <View style={styles.header}>
+                  <View style={styles.logoBadge}>
+                    <Ionicons name="layers" size={26} color="#FFFFFF" />
+                  </View>
+
+                  <Badge label="RECURLY ACCESS" variant="primary" />
+
+                  <Text style={styles.title}>Welcome Back</Text>
+                  <Text style={styles.subtitle}>
+                    Sign in to manage your subscription portfolio
+                  </Text>
+                </View>
+
+                {/* EMAIL INPUT */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>EMAIL ADDRESS</Text>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedInput === "email" && styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="mail-outline"
+                      size={18}
+                      color={
+                        focusedInput === "email"
+                          ? theme.colors.primary
+                          : theme.colors.textMuted
+                      }
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="alex@example.com"
+                      placeholderTextColor={theme.colors.inputPlaceholder}
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      onFocus={() => setFocusedInput("email")}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </View>
+                </View>
+
+                {/* PASSWORD INPUT */}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>PASSWORD</Text>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      focusedInput === "password" &&
+                        styles.inputWrapperFocused,
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={18}
+                      color={
+                        focusedInput === "password"
+                          ? theme.colors.primary
+                          : theme.colors.textMuted
+                      }
+                    />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your password"
+                      placeholderTextColor={theme.colors.inputPlaceholder}
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPassword}
+                      onFocus={() => setFocusedInput("password")}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                    <Pressable
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeBtn}
+                    >
+                      <Ionicons
+                        name={
+                          showPassword
+                            ? "eye-outline"
+                            : "eye-off-outline"
+                        }
+                        size={18}
+                        color={theme.colors.textMuted}
+                      />
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* PRIMARY SIGN IN BUTTON */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.submitButton,
+                    isSubmitting && styles.buttonDisabled,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={handleSignIn}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <>
+                      <Text style={styles.buttonText}>Sign In</Text>
+                      <Ionicons
+                        name="arrow-forward"
+                        size={18}
+                        color="#FFFFFF"
+                      />
+                    </>
+                  )}
+                </Pressable>
+
+                {/* SIGN UP SWITCH ROW */}
+                <View style={styles.signupContainer}>
+                  <Text style={styles.accountText}>
+                    Don't have an account?
+                  </Text>
+                  <Pressable onPress={() => router.push("/(auth)/sign-up")}>
+                    <Text style={styles.signupText}>Create Account</Text>
+                  </Pressable>
+                </View>
+
+                {/* FOOTNOTE */}
+                <View style={styles.footerNote}>
+                  <Ionicons
+                    name="lock-closed"
+                    size={12}
+                    color={theme.colors.textMuted}
+                  />
+                  <Text style={styles.footerNoteText}>
+                    Bank-grade 256-bit encryption • Offline-first storage
+                  </Text>
+                </View>
               </View>
             </View>
-
-            <Pressable
-              style={styles.forgotButton}
-              onPress={() =>
-                showAlert(
-                  "Password Recovery",
-                  "Password reset link has been simulated for your account."
-                )
-              }
-            >
-              <Text style={styles.forgotText}>Forgot password?</Text>
-            </Pressable>
-
-            <Pressable
-              style={[styles.button, isSubmitting && styles.buttonDisabled]}
-              onPress={handleSignIn}
-              disabled={isSubmitting}
-            >
-              <Text style={styles.buttonText}>
-                {isSubmitting ? "Signing In..." : "Sign In"}
-              </Text>
-              <Ionicons name="arrow-forward" size={18} color="#000000" />
-            </Pressable>
-
-            <View style={styles.signupContainer}>
-              <Text style={styles.accountText}>Don't have an account?</Text>
-              <Pressable onPress={() => router.push("/(auth)/sign-up")}>
-                <Text style={styles.signupText}>Create One</Text>
-              </Pressable>
-            </View>
-          </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </AppBackground>
@@ -178,121 +265,187 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 28,
+  },
+  centerContainer: {
+    width: "100%",
+    maxWidth: 440,
+  },
+  topNavRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   backButton: {
-    position: "absolute",
-    top: 20,
-    left: 24,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    padding: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   backText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  logoContainer: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    backgroundColor: "#10B981",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 18,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    marginBottom: 6,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#CBD5E1",
-    textAlign: "center",
-  },
-  inputContainer: {
-    marginBottom: 18,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: "900",
-    color: "#CBD5E1",
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  inputWrapper: {
-    height: 54,
-    backgroundColor: "#131B2C",
-    borderWidth: 1,
-    borderColor: "#26354D",
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    gap: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: "#FFFFFF",
-  },
-  forgotButton: {
-    alignSelf: "flex-end",
-    marginBottom: 24,
-  },
-  forgotText: {
-    color: "#10B981",
+    color: theme.colors.text,
     fontSize: 13,
     fontWeight: "700",
   },
-  button: {
-    height: 56,
-    backgroundColor: "#10B981",
-    borderRadius: 16,
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
+
+  // CARD
+  card: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    ...theme.shadows.modal,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  logoBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 12,
+    ...theme.shadows.subtle,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: theme.colors.text,
+    marginTop: 10,
+    marginBottom: 6,
+    letterSpacing: -0.4,
+  },
+  subtitle: {
+    fontSize: 13.5,
+    color: theme.colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 19,
+    maxWidth: 290,
+  },
+
+  // INPUTS
+  inputContainer: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: theme.colors.text,
+    letterSpacing: 0.4,
+    marginBottom: 6,
+    textTransform: "uppercase",
+  },
+  inputWrapper: {
+    height: 48,
+    backgroundColor: theme.colors.inputBg,
+    borderWidth: 1,
+    borderColor: theme.colors.inputBorder,
+    borderRadius: theme.borderRadius.md,
     flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
     gap: 8,
+    ...(Platform.OS === "web"
+      ? ({ transition: "border-color 0.15s ease, box-shadow 0.15s ease" } as any)
+      : {}),
+  },
+  inputWrapperFocused: {
+    borderColor: theme.colors.primary,
+    ...(Platform.OS === "web"
+      ? ({
+          boxShadow: "0 0 0 3px rgba(37, 99, 235, 0.12)",
+        } as any)
+      : {}),
+  },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: theme.colors.text,
+    height: "100%",
+  },
+  eyeBtn: {
+    padding: 6,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+
+  // SUBMIT
+  submitButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primary,
+    marginTop: 8,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   buttonDisabled: {
-    opacity: 0.7,
+    opacity: 0.65,
   },
   buttonText: {
-    color: "#000000",
-    fontSize: 16,
-    fontWeight: "800",
+    color: "#FFFFFF",
+    fontSize: 14.5,
+    fontWeight: "700",
   },
+
+  // SWITCH
   signupContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 24,
+    marginTop: 20,
     gap: 6,
   },
   accountText: {
-    color: "#94A3B8",
-    fontSize: 14,
+    color: theme.colors.textSecondary,
+    fontSize: 13.5,
   },
   signupText: {
-    color: "#10B981",
-    fontSize: 14,
-    fontWeight: "800",
+    color: theme.colors.primary,
+    fontSize: 13.5,
+    fontWeight: "700",
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+
+  // FOOTER
+  footerNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+    marginTop: 20,
+    paddingTop: 16,
+  },
+  footerNoteText: {
+    fontSize: 11.5,
+    color: theme.colors.textMuted,
+    fontWeight: "500",
   },
 });

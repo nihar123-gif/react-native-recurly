@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
-
-import AppBackground from "@/components/ui/AppBackground";
-import { getSession, signOut } from "@/lib/auth";
+import {
+  Platform,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+
+import AppBackground from "@/components/ui/AppBackground";
+import { theme } from "@/constants/theme";
+import { getSession, signOut } from "@/lib/auth";
 
 export default function Setting() {
   const router = useRouter();
@@ -35,10 +43,14 @@ export default function Setting() {
         <View style={styles.container}>
           <View style={styles.headerRow}>
             <Pressable style={styles.backButton} onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={20} color="#FFFFFF" />
+              <Ionicons
+                name="arrow-back"
+                size={18}
+                color={theme.colors.text}
+              />
             </Pressable>
             <Text style={styles.headerTitle}>System Settings</Text>
-            <View style={{ width: 44 }} />
+            <View style={{ width: 40 }} />
           </View>
 
           <View style={styles.card}>
@@ -50,7 +62,11 @@ export default function Setting() {
           </View>
 
           <Pressable style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={18} color="#FB7185" />
+            <Ionicons
+              name="log-out-outline"
+              size={18}
+              color={theme.colors.error}
+            />
             <Text style={styles.logoutButtonText}>Sign Out</Text>
           </Pressable>
         </View>
@@ -62,11 +78,13 @@ export default function Setting() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "transparent",
   },
   container: {
     flex: 1,
     padding: 24,
+    maxWidth: 600,
+    width: "100%",
+    alignSelf: "center",
   },
   headerRow: {
     flexDirection: "row",
@@ -75,59 +93,65 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
+    width: 40,
+    height: 40,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.card,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: theme.colors.cardBorder,
     alignItems: "center",
     justifyContent: "center",
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: "#FFFFFF",
+    fontSize: 18,
+    fontWeight: "800",
+    color: theme.colors.text,
+    letterSpacing: -0.3,
   },
   card: {
-    backgroundColor: "rgba(13, 17, 23, 0.85)",
-    borderRadius: 20,
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
     padding: 20,
     borderWidth: 1,
-    borderColor: "#1E2533",
+    borderColor: theme.colors.cardBorder,
     marginBottom: 20,
+    ...theme.shadows.subtle,
   },
   label: {
     fontSize: 11,
-    color: "#64748B",
-    fontWeight: "900",
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
     letterSpacing: 0.8,
-    marginBottom: 8,
+    marginBottom: 6,
+    textTransform: "uppercase",
   },
   name: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "800",
-    color: "#FFFFFF",
-    marginBottom: 4,
+    color: theme.colors.text,
+    marginBottom: 2,
   },
   email: {
-    fontSize: 14,
-    color: "#94A3B8",
+    fontSize: 13.5,
+    color: theme.colors.textSecondary,
   },
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "rgba(28, 17, 23, 0.85)",
+    backgroundColor: theme.colors.errorBg,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: "#3D1A28",
-    borderRadius: 16,
-    height: 52,
+    borderColor: theme.colors.errorBorder,
+    height: 48,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   logoutButtonText: {
-    color: "#FB7185",
-    fontSize: 15,
-    fontWeight: "800",
+    color: theme.colors.errorText,
+    fontSize: 13.5,
+    fontWeight: "700",
   },
 });

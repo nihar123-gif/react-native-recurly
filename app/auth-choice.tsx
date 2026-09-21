@@ -1,13 +1,19 @@
-import AppBackground from "@/components/ui/AppBackground";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import React from "react";
 import {
+  Platform,
   Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { useRouter } from "expo-router";
+
+import AppBackground from "@/components/ui/AppBackground";
+import Badge from "@/components/ui/Badge";
+import { theme } from "@/constants/theme";
 
 export default function AuthChoice() {
   const router = useRouter();
@@ -15,170 +21,317 @@ export default function AuthChoice() {
   return (
     <AppBackground>
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.container}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => router.back()}
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
-          </Pressable>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.centerContainer}>
+            {/* TOP NAVIGATION */}
+            <View style={styles.topNavRow}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.backButton,
+                  pressed && styles.buttonPressed,
+                ]}
+                onPress={() => router.back()}
+                accessibilityLabel="Go back"
+              >
+                <Ionicons
+                  name="arrow-back"
+                  size={18}
+                  color={theme.colors.text}
+                />
+                <Text style={styles.backText}>Back</Text>
+              </Pressable>
 
-          <View style={styles.content}>
-            <View style={styles.logoMark}>
-              <Ionicons name="layers" size={34} color="#000000" />
+              <Badge label="256-Bit SSL" variant="primary" dot />
             </View>
-            <Text style={styles.brandBadge}>RECURLY OS</Text>
-            <Text style={styles.title}>Subscription{`\n`}Management</Text>
-            <Text style={styles.subtitle}>
-              Track, optimize, and organize all your recurring bills in one place.
-            </Text>
 
-            <View style={styles.actions}>
-              <ChoiceButton
-                label="Sign In"
-                icon="log-in-outline"
-                onPress={() => router.push("/(auth)/sign-in")}
-                primary
-              />
-              <ChoiceButton
-                label="Create Account"
-                icon="person-add-outline"
-                onPress={() => router.push("/(auth)/sign-up")}
-              />
+            {/* CENTERED SAAS CARD */}
+            <View style={styles.card}>
+              {/* BRAND HEADER */}
+              <View style={styles.header}>
+                <View style={styles.logoBadge}>
+                  <Ionicons name="layers" size={28} color="#FFFFFF" />
+                </View>
+
+                <Badge label="RECURLY OS" variant="primary" />
+
+                <Text style={styles.title}>Subscription Intelligence</Text>
+                <Text style={styles.subtitle}>
+                  Track, optimize, and organize all your recurring bills in one
+                  secure production dashboard.
+                </Text>
+              </View>
+
+              {/* ACTION BUTTONS */}
+              <View style={styles.actions}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.primaryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={() => router.push("/(auth)/sign-in")}
+                >
+                  <Ionicons name="log-in-outline" size={18} color="#FFFFFF" />
+                  <Text style={styles.primaryButtonText}>Sign In</Text>
+                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.secondaryButton,
+                    pressed && styles.secondaryButtonPressed,
+                  ]}
+                  onPress={() => router.push("/(auth)/sign-up")}
+                >
+                  <View style={styles.secondaryIconBadge}>
+                    <Ionicons
+                      name="person-add-outline"
+                      size={18}
+                      color={theme.colors.primary}
+                    />
+                  </View>
+                  <Text style={styles.secondaryButtonText}>Create Account</Text>
+                  <Ionicons
+                    name="arrow-forward"
+                    size={16}
+                    color={theme.colors.textMuted}
+                  />
+                </Pressable>
+              </View>
+
+              {/* STATS HIGHLIGHT ROW */}
+              <View style={styles.statsRow}>
+                <View style={styles.statPill}>
+                  <Text style={styles.statLabel}>AVG SAVINGS</Text>
+                  <Text style={styles.statValue}>$340/yr</Text>
+                </View>
+
+                <View style={styles.statDivider} />
+
+                <View style={styles.statPill}>
+                  <Text style={styles.statLabel}>ALERTS</Text>
+                  <Text style={styles.statHighlight}>48h Prior</Text>
+                </View>
+
+                <View style={styles.statDivider} />
+
+                <View style={styles.statPill}>
+                  <Text style={styles.statLabel}>PRIVACY</Text>
+                  <Text style={styles.statValue}>Zero-Sale</Text>
+                </View>
+              </View>
+
+              {/* SECURITY FOOTNOTE */}
+              <View style={styles.footerNote}>
+                <Ionicons
+                  name="shield-checkmark"
+                  size={14}
+                  color={theme.colors.primary}
+                />
+                <Text style={styles.footerNoteText}>
+                  Bank-grade 256-bit encryption • Local storage privacy
+                </Text>
+              </View>
             </View>
           </View>
-
-          <View style={styles.footerRow}>
-            <Ionicons name="shield-checkmark" size={16} color="#10B981" />
-            <Text style={styles.footerText}>
-              Bank-grade security • Local storage privacy
-            </Text>
-          </View>
-        </View>
+        </ScrollView>
       </SafeAreaView>
     </AppBackground>
   );
 }
 
-function ChoiceButton({
-  label,
-  icon,
-  onPress,
-  primary = false,
-}: {
-  label: string;
-  icon: "log-in-outline" | "person-add-outline";
-  onPress: () => void;
-  primary?: boolean;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.choiceButton,
-        primary ? styles.primaryButton : styles.secondaryButton,
-        pressed && styles.pressed,
-      ]}
-    >
-      <Ionicons
-        name={icon}
-        size={22}
-        color={primary ? "#000000" : "#10B981"}
-      />
-      <Text style={[styles.buttonText, primary && styles.primaryButtonText]}>
-        {label}
-      </Text>
-      <Ionicons
-        name="arrow-forward"
-        size={20}
-        color={primary ? "#000000" : "#94A3B8"}
-      />
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  container: {
+  safeArea: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 28,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 28,
+  },
+  centerContainer: {
+    width: "100%",
+    maxWidth: 440,
+  },
+  topNavRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingHorizontal: 4,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "#131B2C",
-    borderWidth: 1,
-    borderColor: "#26354D",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  content: { flex: 1, alignItems: "center", justifyContent: "center" },
-  logoMark: {
-    width: 76,
-    height: 76,
-    borderRadius: 24,
-    backgroundColor: "#10B981",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-    shadowColor: "#10B981",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  brandBadge: {
-    color: "#10B981",
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 2,
-    marginBottom: 8,
-  },
-  title: {
-    color: "#FFFFFF",
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: "900",
-    textAlign: "center",
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    color: "#CBD5E1",
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: "center",
-    marginTop: 12,
-    maxWidth: 320,
-  },
-  actions: { width: "100%", gap: 14, marginTop: 40 },
-  choiceButton: {
-    height: 58,
-    borderRadius: 16,
-    paddingHorizontal: 20,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  backText: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
+
+  // CARD
+  card: {
+    backgroundColor: theme.colors.card,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    paddingHorizontal: 28,
+    paddingVertical: 32,
+    ...theme.shadows.modal,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 28,
+  },
+  logoBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+    ...theme.shadows.subtle,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: theme.colors.text,
+    marginTop: 12,
+    marginBottom: 8,
+    letterSpacing: -0.4,
+    textAlign: "center",
+  },
+  subtitle: {
+    fontSize: 13.5,
+    color: theme.colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 19,
+    maxWidth: 320,
+  },
+
+  // ACTIONS
+  actions: {
+    gap: 12,
+    marginBottom: 24,
   },
   primaryButton: {
-    backgroundColor: "#10B981",
-  },
-  secondaryButton: {
-    backgroundColor: "#131B2C",
-    borderWidth: 1,
-    borderColor: "#26354D",
-  },
-  buttonText: { flex: 1, color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
-  primaryButtonText: { color: "#000000" },
-  pressed: { opacity: 0.82, transform: [{ scale: 0.99 }] },
-  footerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
+    height: 50,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primary,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
-  footerText: { color: "#94A3B8", fontSize: 13, fontWeight: "600" },
+  primaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  secondaryButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: 16,
+    height: 50,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  secondaryButtonPressed: {
+    backgroundColor: theme.colors.backgroundAlt,
+  },
+  secondaryIconBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  secondaryButtonText: {
+    flex: 1,
+    color: theme.colors.text,
+    fontSize: 14.5,
+    fontWeight: "700",
+  },
+
+  // STATS ROW
+  statsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: theme.colors.backgroundAlt,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+  },
+  statPill: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statLabel: {
+    fontSize: 9.5,
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+  statValue: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: theme.colors.text,
+  },
+  statHighlight: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: theme.colors.primary,
+  },
+  statDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: theme.colors.cardBorder,
+  },
+
+  // FOOTER NOTE
+  footerNote: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.divider,
+    marginTop: 20,
+    paddingTop: 16,
+  },
+  footerNoteText: {
+    fontSize: 11.5,
+    color: theme.colors.textSecondary,
+    fontWeight: "500",
+  },
 });
