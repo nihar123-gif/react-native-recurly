@@ -37,12 +37,8 @@ export default function SignIn() {
   const [portalType, setPortalType] = useState<"user" | "admin">(
     params.mode === "admin" ? "admin" : "user"
   );
-  const [email, setEmail] = useState(
-    params.mode === "admin" ? "admin@recurly.app" : ""
-  );
-  const [password, setPassword] = useState(
-    params.mode === "admin" ? "admin123" : ""
-  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedInput, setFocusedInput] = useState<
@@ -164,8 +160,8 @@ export default function SignIn() {
                     ]}
                     onPress={() => {
                       setPortalType("admin");
-                      setEmail("admin@recurly.app");
-                      setPassword("admin123");
+                      setEmail("");
+                      setPassword("");
                     }}
                   >
                     <Ionicons
@@ -214,15 +210,6 @@ export default function SignIn() {
                   </Text>
                 </View>
 
-                {portalType === "admin" && (
-                  <View style={styles.adminTipBox}>
-                    <Ionicons name="key-outline" size={14} color={theme.colors.primary} />
-                    <Text style={styles.adminTipText}>
-                      Default Admin: <Text style={{ fontWeight: "700" }}>admin@recurly.app</Text> / <Text style={{ fontWeight: "700" }}>admin123</Text>
-                    </Text>
-                  </View>
-                )}
-
                 {/* EMAIL INPUT */}
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>EMAIL ADDRESS</Text>
@@ -243,7 +230,11 @@ export default function SignIn() {
                     />
                     <TextInput
                       style={styles.input}
-                      placeholder="alex@example.com"
+                      placeholder={
+                        portalType === "admin"
+                          ? "admin@company.com"
+                          : "alex@example.com"
+                      }
                       placeholderTextColor={theme.colors.inputPlaceholder}
                       value={email}
                       onChangeText={setEmail}
@@ -444,22 +435,6 @@ const styles = StyleSheet.create({
   portalTabTextActive: {
     color: "#FFFFFF",
     fontWeight: "700",
-  },
-  adminTipBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: theme.colors.primaryLight,
-    borderWidth: 1,
-    borderColor: theme.colors.primaryBorder,
-    borderRadius: theme.borderRadius.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 16,
-  },
-  adminTipText: {
-    fontSize: 11.5,
-    color: theme.colors.primary,
   },
   submitButtonAdmin: {
     backgroundColor: theme.colors.darkNavy,
