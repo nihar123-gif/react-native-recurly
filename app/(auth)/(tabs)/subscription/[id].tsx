@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
 import {
   Alert,
+  Linking,
   Platform,
   Pressable,
   SafeAreaView,
@@ -16,11 +17,13 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import AppBackground from "@/components/ui/AppBackground";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import Badge from "@/components/ui/Badge";
+import SubscriptionFormModal from "@/components/subscription/SubscriptionFormModal";
 import { theme } from "@/constants/theme";
 import {
   calculateAnnualEquivalent,
   calculateMonthlyEquivalent,
   deleteSubscription,
+  formatDateDisplay,
   getDaysUntilDue,
   getSubscriptionById,
   Subscription,
@@ -35,6 +38,8 @@ export default function SubscriptionDetails() {
 
   const [sub, setSub] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const loadSub = useCallback(async () => {
     if (!id) return;
@@ -51,18 +56,38 @@ export default function SubscriptionDetails() {
 
   const handleToggleReminder = async () => {
     if (!sub) return;
+    const newRemind = !sub.remindMe;
     const updated = await updateSubscription(sub.id, {
-      remindMe: !sub.remindMe,
+      remindMe: newRemind,
+      reminderDays: newRemind ? 3 : 0,
     });
     if (updated) setSub(updated);
   };
 
   const handleToggleStatus = async () => {
     if (!sub) return;
+    const newActive = !sub.active;
+    const newStatus = newActive ? "active" : "paused";
     const updated = await updateSubscription(sub.id, {
-      active: !sub.active,
+      active: newActive,
+      status: newStatus,
     });
     if (updated) setSub(updated);
+  };
+
+  const handleUpdate = async (formData: Omit<Subscription, "id">) => {
+    if (!sub) return;
+    try {
+      const updated = await updateSubscription(sub.id, formData);
+      if (updated) {
+        setSub(updated);
+        setEditModalVisible(false);
+        setToastMessage("Subscription updated successfully.");
+        setTimeout(() => setToastMessage(null), 3500);
+      }
+    } catch (e) {
+      console.error("Failed to update subscription:", e);
+    }
   };
 
   const handleDelete = () => {
@@ -75,14 +100,16 @@ export default function SubscriptionDetails() {
     if (Platform.OS === "web") {
       if (
         window.confirm(
-          `Are you sure you want to remove ${sub?.name || "this subscription"}?`
+          `Delete subscription?\n\nAre you sure you want to remove ${
+            sub?.name || "this subscription"
+          }?`
         )
       ) {
         doDelete();
       }
     } else {
       Alert.alert(
-        "Delete Subscription",
+        "Delete subscription?",
         `Are you sure you want to remove ${sub?.name || "this subscription"}?`,
         [
           { text: "Cancel", style: "cancel" },
@@ -139,9 +166,43 @@ export default function SubscriptionDetails() {
   const monthlyEquiv = calculateMonthlyEquivalent(sub);
   const annualEquiv = calculateAnnualEquivalent(sub);
 
+  const displayStatus =
+    sub.status === "cancelled"
+      ? "Cancelled"
+      : sub.status === "paused" || !sub.active
+      ? "Paused"
+      : "Active";
+
+  const badgeVariant =
+    displayStatus === "Active"
+      ? "success"
+      : displayStatus === "Paused"
+      ? "warning"
+      : "neutral";
+
   return (
     <AppBackground>
       <SafeAreaView style={styles.safeArea}>
+        {/* TOAST FEEDBACK BANNER */}
+        {toastMessage && (
+          <View style={styles.toastBanner}>
+            <View style={styles.toastContent}>
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color={theme.colors.success}
+              />
+              <Text style={styles.toastText}>{toastMessage}</Text>
+            </View>
+            <Pressable
+              onPress={() => setToastMessage(null)}
+              style={styles.toastClose}
+            >
+              <Ionicons name="close" size={16} color={theme.colors.textMuted} />
+            </Pressable>
+          </View>
+        )}
+
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -153,7 +214,10 @@ export default function SubscriptionDetails() {
             {/* TOP NAV BAR */}
             <View style={styles.topNav}>
               <Pressable
-                style={styles.navButton}
+                style={({ pressed }) => [
+                  styles.navButton,
+                  pressed && styles.buttonPressed,
+                ]}
                 onPress={() => router.back()}
                 accessibilityLabel="Back"
               >
@@ -166,27 +230,47 @@ export default function SubscriptionDetails() {
 
               <Text style={styles.navTitle}>Plan Overview</Text>
 
-              <Pressable
-                style={[styles.navButton, styles.deleteNavButton]}
-                onPress={handleDelete}
-                accessibilityLabel="Delete"
-              >
-                <Ionicons
-                  name="trash-outline"
-                  size={18}
-                  color={theme.colors.error}
-                />
-              </Pressable>
+              {/* ACTION BUTTONS: EDIT & DELETE */}
+              <View style={styles.navActionsRow}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.navButton,
+                    styles.editNavButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={() => setEditModalVisible(true)}
+                  accessibilityLabel="Edit Plan"
+                >
+                  <Ionicons
+                    name="create-outline"
+                    size={18}
+                    color={theme.colors.primary}
+                  />
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.navButton,
+                    styles.deleteNavButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                  onPress={handleDelete}
+                  accessibilityLabel="Delete"
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={18}
+                    color={theme.colors.error}
+                  />
+                </Pressable>
+              </View>
             </View>
 
             {/* HERO BADGE CARD */}
             <View style={styles.heroCard}>
               <View style={styles.heroTopRow}>
                 <CategoryIcon category={sub.category} size={56} />
-                <Badge
-                  label={sub.active ? "Active" : "Paused"}
-                  variant={sub.active ? "success" : "neutral"}
-                />
+                <Badge label={displayStatus} variant={badgeVariant} />
               </View>
 
               <Text style={styles.heroName}>{sub.name}</Text>
@@ -254,7 +338,9 @@ export default function SubscriptionDetails() {
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Next Due Date</Text>
                 <View style={styles.dueBadgeRow}>
-                  <Text style={styles.infoValue}>{sub.nextPaymentDate}</Text>
+                  <Text style={styles.infoValue}>
+                    {formatDateDisplay(sub.nextPaymentDate)}
+                  </Text>
                   <Badge
                     label={
                       daysLeft <= 0
@@ -280,6 +366,35 @@ export default function SubscriptionDetails() {
                 <Text style={styles.infoValue}>{sub.paymentMethod}</Text>
               </View>
 
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Plan Status</Text>
+                <Text style={styles.infoValue}>{displayStatus}</Text>
+              </View>
+
+              {/* WEBSITE IF AVAILABLE */}
+              {sub.website ? (
+                <Pressable
+                  style={styles.infoRow}
+                  onPress={() => {
+                    const url = sub.website?.startsWith("http")
+                      ? sub.website
+                      : `https://${sub.website}`;
+                    Linking.openURL(url).catch(() => {});
+                  }}
+                >
+                  <Text style={styles.infoLabel}>Official Website</Text>
+                  <View style={styles.websiteLinkRow}>
+                    <Text style={styles.websiteLinkText}>{sub.website}</Text>
+                    <Ionicons
+                      name="open-outline"
+                      size={14}
+                      color={theme.colors.primary}
+                    />
+                  </View>
+                </Pressable>
+              ) : null}
+
+              {/* NOTES IF AVAILABLE */}
               {sub.notes ? (
                 <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
                   <Text style={styles.infoLabel}>Notes</Text>
@@ -300,8 +415,10 @@ export default function SubscriptionDetails() {
                   <View style={{ marginLeft: 12 }}>
                     <Text style={styles.actionTitle}>Renewal Reminder</Text>
                     <Text style={styles.actionSubtitle}>
-                      {sub.remindMe
-                        ? "Notifications enabled 48h prior"
+                      {sub.reminderDays && sub.reminderDays > 0
+                        ? `Notifications sent ${sub.reminderDays} days before renewal`
+                        : sub.remindMe
+                        ? "Notifications sent 48 hours prior"
                         : "Reminders are turned off"}
                     </Text>
                   </View>
@@ -328,7 +445,35 @@ export default function SubscriptionDetails() {
               </View>
             </View>
 
-            {/* SIMULATED BILLING HISTORY */}
+            {/* FINANCIAL RUN RATE CARD */}
+            <View style={styles.infoCard}>
+              <View style={styles.infoCardHeader}>
+                <Ionicons
+                  name="analytics-outline"
+                  size={18}
+                  color={theme.colors.primary}
+                />
+                <Text style={styles.infoCardTitle}>Run-Rate Outflow</Text>
+              </View>
+
+              <View style={styles.statsTwoCol}>
+                <View style={styles.statBox}>
+                  <Text style={styles.statBoxLabel}>MONTHLY OUTFLOW</Text>
+                  <Text style={styles.statBoxValue}>
+                    ${monthlyEquiv.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.statBoxDivider} />
+                <View style={styles.statBox}>
+                  <Text style={styles.statBoxLabel}>ANNUAL RUN-RATE</Text>
+                  <Text style={styles.statBoxValue}>
+                    ${annualEquiv.toFixed(2)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* SIMULATED INVOICES */}
             <View style={styles.infoCard}>
               <View style={styles.infoCardHeader}>
                 <Ionicons
@@ -343,22 +488,7 @@ export default function SubscriptionDetails() {
                 <View>
                   <Text style={styles.invoiceTitle}>Monthly Charge</Text>
                   <Text style={styles.invoiceDate}>
-                    Aug 22, 2026 • Auto-debit
-                  </Text>
-                </View>
-                <View style={{ alignItems: "flex-end", gap: 4 }}>
-                  <Text style={styles.invoiceAmount}>
-                    ${sub.price.toFixed(2)}
-                  </Text>
-                  <Badge label="PAID" variant="success" />
-                </View>
-              </View>
-
-              <View style={[styles.invoiceRow, { borderBottomWidth: 0 }]}>
-                <View>
-                  <Text style={styles.invoiceTitle}>Monthly Charge</Text>
-                  <Text style={styles.invoiceDate}>
-                    Jul 22, 2026 • Auto-debit
+                    Auto-debit processed • {sub.paymentMethod}
                   </Text>
                 </View>
                 <View style={{ alignItems: "flex-end", gap: 4 }}>
@@ -370,20 +500,45 @@ export default function SubscriptionDetails() {
               </View>
             </View>
 
-            {/* DELETE BUTTON */}
-            <Pressable
-              style={styles.deleteBottomButton}
-              onPress={handleDelete}
-            >
-              <Ionicons
-                name="trash-outline"
-                size={18}
-                color={theme.colors.error}
-              />
-              <Text style={styles.deleteBottomButtonText}>
-                Cancel & Remove Subscription
-              </Text>
-            </Pressable>
+            {/* EDIT & DELETE BUTTONS ROW */}
+            <View style={styles.bottomActionsRow}>
+              <Pressable
+                style={styles.editBottomButton}
+                onPress={() => setEditModalVisible(true)}
+              >
+                <Ionicons
+                  name="create-outline"
+                  size={18}
+                  color={theme.colors.primary}
+                />
+                <Text style={styles.editBottomButtonText}>
+                  Edit Subscription
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.deleteBottomButton}
+                onPress={handleDelete}
+              >
+                <Ionicons
+                  name="trash-outline"
+                  size={18}
+                  color={theme.colors.error}
+                />
+                <Text style={styles.deleteBottomButtonText}>
+                  Delete
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* EDIT MODAL */}
+            <SubscriptionFormModal
+              visible={editModalVisible}
+              onClose={() => setEditModalVisible(false)}
+              onSubmit={handleUpdate}
+              initialData={sub}
+              mode="edit"
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -432,12 +587,48 @@ const styles = StyleSheet.create({
   container: { width: "100%", paddingHorizontal: 20, paddingTop: 16 },
   webContainer: { maxWidth: 720, paddingTop: 32, paddingHorizontal: 32 },
 
+  // TOAST BANNER
+  toastBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    borderRadius: theme.borderRadius.md,
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: -4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...theme.shadows.subtle,
+  },
+  toastContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  toastText: {
+    color: "#166534",
+    fontSize: 13.5,
+    fontWeight: "700",
+  },
+  toastClose: {
+    padding: 4,
+  },
+
   // TOP NAV
   topNav: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
+  },
+  navActionsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   navButton: {
     width: 40,
@@ -451,9 +642,16 @@ const styles = StyleSheet.create({
     ...theme.shadows.subtle,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
+  editNavButton: {
+    backgroundColor: theme.colors.primaryLight,
+    borderColor: theme.colors.primaryBorder,
+  },
   deleteNavButton: {
     backgroundColor: theme.colors.errorBg,
     borderColor: theme.colors.errorBorder,
+  },
+  buttonPressed: {
+    opacity: 0.8,
   },
   navTitle: {
     color: theme.colors.text,
@@ -505,12 +703,13 @@ const styles = StyleSheet.create({
   },
   heroCycle: {
     color: theme.colors.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "600",
     marginLeft: 4,
   },
   equivalentRow: {
     flexDirection: "row",
+    alignItems: "center",
     gap: 6,
     marginBottom: 16,
   },
@@ -520,8 +719,8 @@ const styles = StyleSheet.create({
   },
   equivalentValue: {
     color: theme.colors.primary,
+    fontSize: 13,
     fontWeight: "700",
-    fontSize: 12.5,
   },
   statusToggleButton: {
     flexDirection: "row",
@@ -540,13 +739,14 @@ const styles = StyleSheet.create({
   },
   statusToggleResume: {
     backgroundColor: theme.colors.primary,
+    ...theme.shadows.subtle,
   },
   statusToggleText: {
     fontSize: 13.5,
     fontWeight: "700",
   },
   statusToggleTextPause: {
-    color: theme.colors.textSecondary,
+    color: theme.colors.text,
   },
   statusToggleTextResume: {
     color: "#FFFFFF",
@@ -555,8 +755,8 @@ const styles = StyleSheet.create({
   // INFO CARD
   infoCard: {
     backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.xl,
-    padding: 20,
+    borderRadius: theme.borderRadius.lg,
+    padding: 18,
     borderWidth: 1,
     borderColor: theme.colors.cardBorder,
     marginBottom: 16,
@@ -567,42 +767,44 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     marginBottom: 14,
-    paddingBottom: 10,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
   },
   infoCardTitle: {
     color: theme.colors.text,
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 14.5,
+    fontWeight: "800",
   },
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
   },
   infoLabel: {
     color: theme.colors.textSecondary,
     fontSize: 13,
+    fontWeight: "600",
   },
   infoValue: {
     color: theme.colors.text,
     fontSize: 13.5,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   infoValueCapitalized: {
     color: theme.colors.text,
     fontSize: 13.5,
-    fontWeight: "600",
+    fontWeight: "700",
     textTransform: "capitalize",
   },
   infoValueNotes: {
     color: theme.colors.text,
     fontSize: 13,
-    maxWidth: 220,
+    fontWeight: "500",
+    maxWidth: "60%",
     textAlign: "right",
   },
   dueBadgeRow: {
@@ -610,12 +812,50 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
+  websiteLinkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  websiteLinkText: {
+    color: theme.colors.primary,
+    fontSize: 13,
+    fontWeight: "600",
+    textDecorationLine: "underline",
+  },
 
-  // ACTION CARD
+  // STATS TWO COL
+  statsTwoCol: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statBox: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statBoxLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: theme.colors.textSecondary,
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
+  statBoxValue: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: theme.colors.text,
+  },
+  statBoxDivider: {
+    width: 1,
+    height: 36,
+    backgroundColor: theme.colors.cardBorder,
+  },
+
+  // ACTION CARD (NOTIFICATION)
   actionCard: {
     backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.xl,
-    padding: 18,
+    borderRadius: theme.borderRadius.lg,
+    padding: 16,
     borderWidth: 1,
     borderColor: theme.colors.cardBorder,
     marginBottom: 16,
@@ -623,8 +863,8 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   actionCopy: {
     flexDirection: "row",
@@ -635,16 +875,16 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontSize: 14,
     fontWeight: "700",
+    marginBottom: 2,
   },
   actionSubtitle: {
     color: theme.colors.textSecondary,
     fontSize: 12,
-    marginTop: 2,
   },
   toggleSwitch: {
-    width: 44,
-    height: 26,
-    borderRadius: 13,
+    width: 48,
+    height: 28,
+    borderRadius: 14,
     padding: 2,
     justifyContent: "center",
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
@@ -653,12 +893,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
   },
   toggleSwitchInactive: {
-    backgroundColor: theme.colors.inputBorder,
+    backgroundColor: theme.colors.backgroundAlt,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
   },
   toggleKnob: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     backgroundColor: "#FFFFFF",
     ...theme.shadows.subtle,
   },
@@ -674,44 +916,67 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.divider,
   },
   invoiceTitle: {
     color: theme.colors.text,
     fontSize: 13.5,
-    fontWeight: "600",
+    fontWeight: "700",
   },
   invoiceDate: {
     color: theme.colors.textSecondary,
-    fontSize: 12,
+    fontSize: 11.5,
     marginTop: 2,
   },
   invoiceAmount: {
     color: theme.colors.text,
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 13.5,
+    fontWeight: "800",
   },
 
-  // DELETE BUTTON
-  deleteBottomButton: {
+  // BOTTOM ACTIONS
+  bottomActionsRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  editBottomButton: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: theme.colors.errorBg,
+    height: 48,
     borderRadius: theme.borderRadius.md,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: theme.colors.primaryBorder,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  editBottomButtonText: {
+    color: theme.colors.primary,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  deleteBottomButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.errorBg,
     borderWidth: 1,
     borderColor: theme.colors.errorBorder,
-    height: 48,
-    marginTop: 8,
-    marginBottom: 20,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
   },
   deleteBottomButtonText: {
-    color: theme.colors.errorText,
-    fontSize: 13.5,
+    color: theme.colors.error,
+    fontSize: 14,
     fontWeight: "700",
   },
 });

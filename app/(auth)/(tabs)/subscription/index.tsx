@@ -1,7 +1,5 @@
 import React, { useCallback, useState } from "react";
 import {
-  Alert,
-  Modal,
   Platform,
   Pressable,
   RefreshControl,
@@ -20,11 +18,12 @@ import AppBackground from "@/components/ui/AppBackground";
 import CategoryIcon from "@/components/ui/CategoryIcon";
 import Illustration from "@/components/ui/Illustration";
 import Badge from "@/components/ui/Badge";
+import SubscriptionFormModal from "@/components/subscription/SubscriptionFormModal";
 import { theme } from "@/constants/theme";
 import {
   addSubscription,
-  BillingCycle,
   calculateMonthlyEquivalent,
+  formatDateDisplay,
   getSubscriptions,
   Subscription,
   SubscriptionCategory,
@@ -40,13 +39,7 @@ const CATEGORIES: { id: "all" | SubscriptionCategory; label: string }[] = [
   { id: "gaming", label: "Gaming" },
   { id: "reading", label: "Reading" },
   { id: "utilities", label: "Utilities" },
-];
-
-const BILLING_CYCLES: { id: BillingCycle; label: string }[] = [
-  { id: "monthly", label: "Monthly" },
-  { id: "yearly", label: "Yearly" },
-  { id: "weekly", label: "Weekly" },
-  { id: "quarterly", label: "Quarterly" },
+  { id: "other", label: "Other" },
 ];
 
 export default function SubscriptionsCatalog() {
@@ -60,16 +53,8 @@ export default function SubscriptionsCatalog() {
   >("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
-
-  // Modal State
   const [modalVisible, setModalVisible] = useState(false);
-  const [newPlanName, setNewPlanName] = useState("");
-  const [newPlanCategory, setNewPlanCategory] =
-    useState<SubscriptionCategory>("streaming");
-  const [newPlanPrice, setNewPlanPrice] = useState("");
-  const [newPlanCycle, setNewPlanCycle] = useState<BillingCycle>("monthly");
-  const [newPlanPaymentMethod, setNewPlanPaymentMethod] = useState("Apple Pay");
-  const [newPlanRemind, setNewPlanRemind] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     const data = await getSubscriptions();
@@ -88,43 +73,19 @@ export default function SubscriptionsCatalog() {
     setRefreshing(false);
   };
 
-  const handleCreateSubscription = async () => {
-    if (!newPlanName.trim()) {
-      if (Platform.OS === "web") window.alert("Please enter a service name");
-      else Alert.alert("Missing Name", "Please enter a service name.");
-      return;
-    }
-
-    const priceNumber = parseFloat(newPlanPrice.replace("$", "").trim());
-    if (isNaN(priceNumber) || priceNumber <= 0) {
-      if (Platform.OS === "web") window.alert("Please enter a valid price");
-      else Alert.alert("Invalid Price", "Please enter a valid price amount.");
-      return;
-    }
-
-    const nextDate = new Date();
-    nextDate.setDate(nextDate.getDate() + 30);
-    const dateStr = nextDate.toISOString().split("T")[0];
-
+  const handleCreateSubscription = async (
+    formData: Omit<Subscription, "id">
+  ) => {
     try {
-      await addSubscription({
-        name: newPlanName.trim(),
-        category: newPlanCategory,
-        price: priceNumber,
-        currency: "$",
-        billingCycle: newPlanCycle,
-        nextPaymentDate: dateStr,
-        paymentMethod: newPlanPaymentMethod.trim() || "Apple Pay",
-        active: true,
-        remindMe: newPlanRemind,
-      });
-
+      const created = await addSubscription(formData);
       setModalVisible(false);
-      setNewPlanName("");
-      setNewPlanPrice("");
       await loadData();
+      setToastMessage(`${created.name} added successfully.`);
+      setTimeout(() => {
+        setToastMessage(null);
+      }, 3500);
     } catch (e) {
-      console.error(e);
+      console.error("Failed to add subscription:", e);
     }
   };
 
@@ -133,7 +94,10 @@ export default function SubscriptionsCatalog() {
       selectedCategory === "all" || sub.category === selectedCategory;
     const matchesSearch =
       sub.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sub.category.toLowerCase().includes(searchQuery.toLowerCase());
+      sub.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (sub.notes && sub.notes.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (sub.paymentMethod &&
+        sub.paymentMethod.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -147,6 +111,26 @@ export default function SubscriptionsCatalog() {
   return (
     <AppBackground>
       <SafeAreaView style={styles.safeArea}>
+        {/* SUCCESS TOAST NOTIFICATION BANNER */}
+        {toastMessage && (
+          <View style={styles.toastBanner}>
+            <View style={styles.toastContent}>
+              <Ionicons
+                name="checkmark-circle"
+                size={18}
+                color={theme.colors.success}
+              />
+              <Text style={styles.toastText}>{toastMessage}</Text>
+            </View>
+            <Pressable
+              onPress={() => setToastMessage(null)}
+              style={styles.toastClose}
+            >
+              <Ionicons name="close" size={16} color={theme.colors.textMuted} />
+            </Pressable>
+          </View>
+        )}
+
         <ScrollView
           contentContainerStyle={[
             styles.scrollContent,
@@ -170,7 +154,10 @@ export default function SubscriptionsCatalog() {
               </View>
 
               <Pressable
-                style={styles.addButton}
+                style={({ pressed }) => [
+                  styles.addButton,
+                  pressed && styles.buttonPressed,
+                ]}
                 onPress={() => setModalVisible(true)}
                 accessibilityLabel="Add New Plan"
               >
@@ -188,7 +175,7 @@ export default function SubscriptionsCatalog() {
               />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Search subscriptions or category..."
+                placeholder="Search subscriptions, category, notes..."
                 placeholderTextColor={theme.colors.inputPlaceholder}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -204,27 +191,27 @@ export default function SubscriptionsCatalog() {
               )}
             </View>
 
-            {/* CATEGORY PILLS */}
+            {/* CATEGORY FILTER PILLS */}
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.categoriesRow}
             >
               {CATEGORIES.map((cat) => {
-                const active = selectedCategory === cat.id;
+                const isSelected = selectedCategory === cat.id;
                 return (
                   <Pressable
                     key={cat.id}
                     style={[
                       styles.categoryPill,
-                      active && styles.categoryPillActive,
+                      isSelected && styles.categoryPillActive,
                     ]}
                     onPress={() => setSelectedCategory(cat.id)}
                   >
                     <Text
                       style={[
                         styles.categoryPillText,
-                        active && styles.categoryPillTextActive,
+                        isSelected && styles.categoryPillTextActive,
                       ]}
                     >
                       {cat.label}
@@ -253,8 +240,32 @@ export default function SubscriptionsCatalog() {
               </View>
             </View>
 
-            {/* LIST */}
-            {filtered.length === 0 ? (
+            {/* LIST OR EMPTY STATES */}
+            {subscriptions.length === 0 ? (
+              // Empty Portfolio State
+              <View style={styles.emptyState}>
+                <Illustration
+                  name="empty-state-no-subscriptions"
+                  width={180}
+                  height={180}
+                />
+                <Text style={styles.emptyStateTitle}>No subscriptions yet</Text>
+                <Text style={styles.emptyStateDesc}>
+                  Add your first subscription to start tracking your recurring
+                  expenses and renewal alerts.
+                </Text>
+                <Pressable
+                  style={styles.emptyAddButton}
+                  onPress={() => setModalVisible(true)}
+                >
+                  <Ionicons name="add" size={18} color="#FFFFFF" />
+                  <Text style={styles.emptyAddButtonText}>
+                    Add Subscription
+                  </Text>
+                </Pressable>
+              </View>
+            ) : filtered.length === 0 ? (
+              // Empty Filter/Search Results State
               <View style={styles.emptyState}>
                 <Illustration
                   name="empty-state-no-subscriptions"
@@ -277,9 +288,23 @@ export default function SubscriptionsCatalog() {
                 </Pressable>
               </View>
             ) : (
+              // Active Subscriptions List
               <View style={styles.plansList}>
                 {filtered.map((sub) => {
-                  const monthly = calculateMonthlyEquivalent(sub);
+                  const displayStatus =
+                    sub.status === "cancelled"
+                      ? "Cancelled"
+                      : sub.status === "paused" || !sub.active
+                      ? "Paused"
+                      : "Active";
+
+                  const badgeVariant =
+                    displayStatus === "Active"
+                      ? "success"
+                      : displayStatus === "Paused"
+                      ? "warning"
+                      : "neutral";
+
                   return (
                     <Pressable
                       key={sub.id}
@@ -302,12 +327,13 @@ export default function SubscriptionsCatalog() {
                         <View style={styles.planNameRow}>
                           <Text style={styles.planName}>{sub.name}</Text>
                           <Badge
-                            label={sub.active ? "Active" : "Paused"}
-                            variant={sub.active ? "success" : "neutral"}
+                            label={displayStatus}
+                            variant={badgeVariant}
                           />
                         </View>
                         <Text style={styles.planSubmeta}>
-                          Renews {sub.nextPaymentDate} • {sub.paymentMethod}
+                          Renews {formatDateDisplay(sub.nextPaymentDate)} •{" "}
+                          {sub.paymentMethod}
                         </Text>
                       </View>
 
@@ -332,206 +358,13 @@ export default function SubscriptionsCatalog() {
               </View>
             )}
 
-            {/* ADD SUBSCRIPTION MODAL */}
-            <Modal
+            {/* PRODUCTION REUSABLE ADD SUBSCRIPTION MODAL */}
+            <SubscriptionFormModal
               visible={modalVisible}
-              animationType="slide"
-              transparent={true}
-              onRequestClose={() => setModalVisible(false)}
-            >
-              <View style={styles.modalOverlay}>
-                <View style={styles.modalContainer}>
-                  {/* MODAL HEADER */}
-                  <View style={styles.modalHeader}>
-                    <View>
-                      <Text style={styles.modalEyebrow}>NEW RECORD</Text>
-                      <Text style={styles.modalTitle}>Add Subscription</Text>
-                    </View>
-                    <Pressable
-                      style={styles.modalCloseButton}
-                      onPress={() => setModalVisible(false)}
-                    >
-                      <Ionicons
-                        name="close"
-                        size={20}
-                        color={theme.colors.textSecondary}
-                      />
-                    </Pressable>
-                  </View>
-
-                  <ScrollView
-                    contentContainerStyle={styles.modalScroll}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {/* NAME */}
-                    <View style={styles.fieldGroup}>
-                      <Text style={styles.fieldLabel}>SERVICE NAME</Text>
-                      <View style={styles.modalInputWrap}>
-                        <Ionicons
-                          name="business-outline"
-                          size={18}
-                          color={theme.colors.textMuted}
-                        />
-                        <TextInput
-                          style={styles.modalInput}
-                          placeholder="e.g. Netflix, Spotify, Figma"
-                          placeholderTextColor={theme.colors.inputPlaceholder}
-                          value={newPlanName}
-                          onChangeText={setNewPlanName}
-                        />
-                      </View>
-                    </View>
-
-                    {/* CATEGORY PICKER */}
-                    <View style={styles.fieldGroup}>
-                      <Text style={styles.fieldLabel}>CATEGORY</Text>
-                      <View style={styles.categoryPickerWrap}>
-                        {(CATEGORIES.filter((c) => c.id !== "all") as {
-                          id: SubscriptionCategory;
-                          label: string;
-                        }[]).map((cat) => {
-                          const isSelected = newPlanCategory === cat.id;
-                          return (
-                            <Pressable
-                              key={cat.id}
-                              style={[
-                                styles.pickerItem,
-                                isSelected && styles.pickerItemActive,
-                              ]}
-                              onPress={() => setNewPlanCategory(cat.id)}
-                            >
-                              <CategoryIcon category={cat.id} size={20} />
-                              <Text
-                                style={[
-                                  styles.pickerItemText,
-                                  isSelected && styles.pickerItemTextActive,
-                                ]}
-                              >
-                                {cat.label}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                      </View>
-                    </View>
-
-                    {/* PRICE & CYCLE */}
-                    <View style={styles.twoColRow}>
-                      <View style={[styles.fieldGroup, { flex: 1 }]}>
-                        <Text style={styles.fieldLabel}>PRICE ($)</Text>
-                        <View style={styles.modalInputWrap}>
-                          <Text
-                            style={{
-                              color: theme.colors.primary,
-                              fontWeight: "800",
-                              fontSize: 16,
-                            }}
-                          >
-                            $
-                          </Text>
-                          <TextInput
-                            style={styles.modalInput}
-                            placeholder="14.99"
-                            placeholderTextColor={theme.colors.inputPlaceholder}
-                            value={newPlanPrice}
-                            onChangeText={setNewPlanPrice}
-                            keyboardType="decimal-pad"
-                          />
-                        </View>
-                      </View>
-
-                      <View style={[styles.fieldGroup, { flex: 1.2 }]}>
-                        <Text style={styles.fieldLabel}>BILLING CYCLE</Text>
-                        <View style={styles.cyclePickerRow}>
-                          {BILLING_CYCLES.map((c) => (
-                            <Pressable
-                              key={c.id}
-                              style={[
-                                styles.cyclePill,
-                                newPlanCycle === c.id && styles.cyclePillActive,
-                              ]}
-                              onPress={() => setNewPlanCycle(c.id)}
-                            >
-                              <Text
-                                style={[
-                                  styles.cyclePillText,
-                                  newPlanCycle === c.id &&
-                                    styles.cyclePillTextActive,
-                                ]}
-                              >
-                                {c.label}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* PAYMENT METHOD */}
-                    <View style={styles.fieldGroup}>
-                      <Text style={styles.fieldLabel}>PAYMENT METHOD</Text>
-                      <View style={styles.modalInputWrap}>
-                        <Ionicons
-                          name="card-outline"
-                          size={18}
-                          color={theme.colors.textMuted}
-                        />
-                        <TextInput
-                          style={styles.modalInput}
-                          placeholder="e.g. Apple Pay, Visa •• 4291"
-                          placeholderTextColor={theme.colors.inputPlaceholder}
-                          value={newPlanPaymentMethod}
-                          onChangeText={setNewPlanPaymentMethod}
-                        />
-                      </View>
-                    </View>
-
-                    {/* REMINDER TOGGLE */}
-                    <Pressable
-                      style={styles.reminderToggleRow}
-                      onPress={() => setNewPlanRemind(!newPlanRemind)}
-                    >
-                      <View style={styles.reminderToggleCopy}>
-                        <Text style={styles.reminderToggleTitle}>
-                          Renewal Reminder
-                        </Text>
-                        <Text style={styles.reminderToggleSubtitle}>
-                          Notify me 48 hours prior
-                        </Text>
-                      </View>
-                      <Ionicons
-                        name={
-                          newPlanRemind
-                            ? "checkmark-circle"
-                            : "ellipse-outline"
-                        }
-                        size={24}
-                        color={
-                          newPlanRemind
-                            ? theme.colors.primary
-                            : theme.colors.textMuted
-                        }
-                      />
-                    </Pressable>
-
-                    {/* SUBMIT BUTTON */}
-                    <Pressable
-                      style={styles.savePlanButton}
-                      onPress={handleCreateSubscription}
-                    >
-                      <Text style={styles.savePlanButtonText}>
-                        Save Subscription
-                      </Text>
-                      <Ionicons
-                        name="arrow-forward"
-                        size={18}
-                        color="#FFFFFF"
-                      />
-                    </Pressable>
-                  </ScrollView>
-                </View>
-              </View>
-            </Modal>
+              onClose={() => setModalVisible(false)}
+              onSubmit={handleCreateSubscription}
+              mode="create"
+            />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -545,6 +378,38 @@ const styles = StyleSheet.create({
   webScrollContent: { alignItems: "center" },
   container: { width: "100%", paddingHorizontal: 20, paddingTop: 16 },
   webContainer: { maxWidth: 920, paddingTop: 32, paddingHorizontal: 32 },
+
+  // TOAST BANNER
+  toastBanner: {
+    position: "relative",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#F0FDF4",
+    borderWidth: 1,
+    borderColor: "#BBF7D0",
+    borderRadius: theme.borderRadius.md,
+    marginHorizontal: 20,
+    marginTop: 10,
+    marginBottom: -4,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...theme.shadows.subtle,
+  },
+  toastContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  toastText: {
+    color: "#166534",
+    fontSize: 13.5,
+    fontWeight: "700",
+  },
+  toastClose: {
+    padding: 4,
+  },
 
   // HEADER
   headerRow: {
@@ -577,6 +442,10 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     ...theme.shadows.subtle,
     ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   addButtonText: {
     color: "#FFFFFF",
@@ -761,9 +630,25 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: theme.colors.textSecondary,
     textAlign: "center",
-    maxWidth: 280,
+    maxWidth: 300,
     lineHeight: 18,
     marginBottom: 18,
+  },
+  emptyAddButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  emptyAddButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13.5,
+    fontWeight: "700",
   },
   clearFilterButton: {
     backgroundColor: theme.colors.primaryLight,
@@ -777,197 +662,6 @@ const styles = StyleSheet.create({
   clearFilterText: {
     color: theme.colors.primary,
     fontSize: 13,
-    fontWeight: "700",
-  },
-
-  // MODAL
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.45)",
-    justifyContent: Platform.OS === "web" ? "center" : "flex-end",
-    alignItems: Platform.OS === "web" ? "center" : undefined,
-    padding: Platform.OS === "web" ? 20 : 0,
-  },
-  modalContainer: {
-    backgroundColor: theme.colors.card,
-    width: "100%",
-    maxWidth: 520,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderBottomLeftRadius: Platform.OS === "web" ? 24 : 0,
-    borderBottomRightRadius: Platform.OS === "web" ? 24 : 0,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder,
-    maxHeight: Platform.OS === "web" ? ("85vh" as any) : "90%",
-    paddingBottom: 24,
-    ...theme.shadows.modal,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 22,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.divider,
-  },
-  modalEyebrow: {
-    fontSize: 10.5,
-    fontWeight: "700",
-    color: theme.colors.textSecondary,
-    letterSpacing: 0.8,
-    textTransform: "uppercase",
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: theme.colors.text,
-    marginTop: 2,
-    letterSpacing: -0.3,
-  },
-  modalCloseButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: theme.colors.backgroundAlt,
-    alignItems: "center",
-    justifyContent: "center",
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  modalScroll: {
-    paddingHorizontal: 22,
-    paddingTop: 16,
-    paddingBottom: 20,
-    gap: 16,
-  },
-  fieldGroup: {
-    gap: 6,
-  },
-  fieldLabel: {
-    color: theme.colors.text,
-    fontSize: 11.5,
-    fontWeight: "700",
-    letterSpacing: 0.3,
-    textTransform: "uppercase",
-  },
-  modalInputWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: theme.colors.inputBg,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.inputBorder,
-    paddingHorizontal: 12,
-    height: 46,
-    gap: 8,
-  },
-  modalInput: {
-    flex: 1,
-    color: theme.colors.text,
-    fontSize: 14,
-    height: "100%",
-  },
-  categoryPickerWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  pickerItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: theme.colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: theme.borderRadius.sm,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  pickerItemActive: {
-    backgroundColor: theme.colors.primaryLight,
-    borderColor: theme.colors.primary,
-  },
-  pickerItemText: {
-    color: theme.colors.textSecondary,
-    fontSize: 12,
-    textTransform: "capitalize",
-    fontWeight: "600",
-  },
-  pickerItemTextActive: {
-    color: theme.colors.primary,
-    fontWeight: "700",
-  },
-  twoColRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  cyclePickerRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-  },
-  cyclePill: {
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: theme.borderRadius.sm,
-    backgroundColor: theme.colors.backgroundAlt,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  cyclePillActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  cyclePillText: {
-    color: theme.colors.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
-  },
-  cyclePillTextActive: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  reminderToggleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: theme.colors.backgroundAlt,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder,
-    padding: 12,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  reminderToggleCopy: {
-    gap: 2,
-  },
-  reminderToggleTitle: {
-    color: theme.colors.text,
-    fontSize: 13.5,
-    fontWeight: "700",
-  },
-  reminderToggleSubtitle: {
-    color: theme.colors.textSecondary,
-    fontSize: 11.5,
-  },
-  savePlanButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: theme.colors.primary,
-    height: 48,
-    borderRadius: theme.borderRadius.md,
-    marginTop: 6,
-    ...theme.shadows.subtle,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  savePlanButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14.5,
     fontWeight: "700",
   },
 });

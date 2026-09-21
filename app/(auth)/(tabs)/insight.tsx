@@ -33,6 +33,7 @@ const CATEGORY_COLORS: Record<SubscriptionCategory, string> = {
   gaming: "#7C3AED", // Violet
   reading: "#D97706", // Amber
   utilities: "#EC4899", // Pink
+  other: "#64748B", // Slate
 };
 
 export default function InsightsScreen() {

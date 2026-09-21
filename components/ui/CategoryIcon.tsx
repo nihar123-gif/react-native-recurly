@@ -9,14 +9,15 @@ type CategoryName =
   | 'reading'
   | 'software'
   | 'streaming'
-  | 'utilities';
+  | 'utilities'
+  | 'other';
 
 interface CategoryIconProps extends Omit<ImageProps, 'source'> {
   category: CategoryName;
   size?: number;
 }
 
-const categoryMap: Record<CategoryName, any> = {
+const categoryMap: Partial<Record<CategoryName, any>> = {
   cloud: require('@/assets/icons/categories/cloud.png'),
   fitness: require('@/assets/icons/categories/fitness.png'),
   gaming: require('@/assets/icons/categories/gaming.png'),
@@ -33,9 +34,10 @@ export default function CategoryIcon({
   style,
   ...props 
 }: CategoryIconProps) {
+  const source = categoryMap[category] || categoryMap.utilities;
   return (
     <Image
-      source={categoryMap[category]}
+      source={source}
       style={[
         { width: size, height: size },
         style,

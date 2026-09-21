@@ -8,9 +8,12 @@ export type SubscriptionCategory =
   | "fitness"
   | "reading"
   | "software"
-  | "utilities";
+  | "utilities"
+  | "other";
 
 export type BillingCycle = "monthly" | "yearly" | "weekly" | "quarterly";
+
+export type SubscriptionStatus = "active" | "paused" | "cancelled";
 
 export type Subscription = {
   id: string;
@@ -23,9 +26,14 @@ export type Subscription = {
   nextPaymentDate: string; // ISO date string YYYY-MM-DD
   paymentMethod: string;
   notes?: string;
+  website?: string;
   active: boolean;
+  status?: SubscriptionStatus;
   remindMe: boolean;
+  reminderDays?: number; // 0 (none), 1, 3, 7, 14
   color?: string;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 const SUBSCRIPTIONS_KEY = "@recurly_subscriptions_v1";
@@ -155,12 +163,54 @@ export const getSubscriptionById = async (id: string): Promise<Subscription | nu
   return subs.find((s) => s.id === id) || null;
 };
 
+export const checkDuplicateName = async (
+  name: string,
+  excludeId?: string
+): Promise<boolean> => {
+  const subs = await getSubscriptions();
+  const trimmed = name.trim().toLowerCase();
+  return subs.some(
+    (s) => s.id !== excludeId && s.name.trim().toLowerCase() === trimmed
+  );
+};
+
+export const formatDateDisplay = (dateStr: string): string => {
+  if (!dateStr) return "";
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month, day);
+      return d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+    return new Date(dateStr).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return dateStr;
+  }
+};
+
 export const addSubscription = async (
   sub: Omit<Subscription, "id">
 ): Promise<Subscription> => {
   const subs = await getSubscriptions();
+  const now = new Date().toISOString();
+  const status: SubscriptionStatus = sub.status || (sub.active ? "active" : "paused");
   const newSub: Subscription = {
     ...sub,
+    status,
+    active: status === "active",
+    createdAt: now,
+    updatedAt: now,
     id: `sub-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
   };
   const updated = [newSub, ...subs];
@@ -176,7 +226,24 @@ export const updateSubscription = async (
   const index = subs.findIndex((s) => s.id === id);
   if (index === -1) return null;
 
-  const updatedItem = { ...subs[index], ...updates };
+  const now = new Date().toISOString();
+  let active = updates.active;
+  let status = updates.status;
+
+  if (status !== undefined && active === undefined) {
+    active = status === "active";
+  } else if (active !== undefined && status === undefined) {
+    status = active ? "active" : "paused";
+  }
+
+  const updatedItem: Subscription = {
+    ...subs[index],
+    ...updates,
+    ...(active !== undefined ? { active } : {}),
+    ...(status !== undefined ? { status } : {}),
+    updatedAt: now,
+  };
+
   subs[index] = updatedItem;
   await saveSubscriptions(subs);
   return updatedItem;
@@ -195,7 +262,8 @@ export const resetSubscriptionsToDefault = async (): Promise<Subscription[]> => 
 };
 
 export const calculateMonthlyEquivalent = (sub: Subscription): number => {
-  if (!sub.active) return 0;
+  const isInactive = !sub.active || sub.status === "paused" || sub.status === "cancelled";
+  if (isInactive) return 0;
   switch (sub.billingCycle) {
     case "weekly":
       return sub.price * 4.33;
