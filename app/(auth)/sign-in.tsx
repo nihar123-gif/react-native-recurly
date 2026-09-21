@@ -95,7 +95,13 @@ export default function SignIn() {
                     styles.backButton,
                     pressed && styles.buttonPressed,
                   ]}
-                  onPress={() => router.back()}
+                  onPress={() => {
+                    if (router.canGoBack()) {
+                      router.back();
+                    } else {
+                      router.replace("/auth-choice");
+                    }
+                  }}
                   accessibilityLabel="Go back"
                 >
                   <Ionicons

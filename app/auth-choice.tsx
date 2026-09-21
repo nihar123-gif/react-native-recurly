@@ -18,35 +18,42 @@ import { theme } from "@/constants/theme";
 export default function AuthChoice() {
   const router = useRouter();
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/onboarding");
+    }
+  };
+
   return (
     <AppBackground>
       <SafeAreaView style={styles.safeArea}>
+        {/* TOP NAVIGATION BAR AT TOP-LEFT */}
+        <View style={styles.topNavRow}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.backButton,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleBack}
+            accessibilityLabel="Go back to onboarding"
+          >
+            <Ionicons
+              name="arrow-back"
+              size={22}
+              color={theme.colors.text}
+            />
+          </Pressable>
+
+          <Badge label="256-Bit SSL" variant="primary" dot />
+        </View>
+
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.centerContainer}>
-            {/* TOP NAVIGATION */}
-            <View style={styles.topNavRow}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.backButton,
-                  pressed && styles.buttonPressed,
-                ]}
-                onPress={() => router.back()}
-                accessibilityLabel="Go back"
-              >
-                <Ionicons
-                  name="arrow-back"
-                  size={18}
-                  color={theme.colors.text}
-                />
-                <Text style={styles.backText}>Back</Text>
-              </Pressable>
-
-              <Badge label="256-Bit SSL" variant="primary" dot />
-            </View>
-
             {/* CENTERED SAAS CARD */}
             <View style={styles.card}>
               {/* BRAND HEADER */}
@@ -146,45 +153,41 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  topNavRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 8,
+    width: "100%",
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.card,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+    alignItems: "center",
+    justifyContent: "center",
+    ...theme.shadows.subtle,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 28,
+    paddingBottom: 28,
   },
   centerContainer: {
     width: "100%",
     maxWidth: 440,
-  },
-  topNavRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.card,
-    borderWidth: 1,
-    borderColor: theme.colors.cardBorder,
-    ...theme.shadows.subtle,
-    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
-  },
-  backText: {
-    color: theme.colors.text,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  buttonPressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
   },
 
   // CARD
