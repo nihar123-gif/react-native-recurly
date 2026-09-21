@@ -142,6 +142,21 @@ export default function AuthChoice() {
                 </Text>
               </View>
             </View>
+
+            {/* ADMIN ACCESS ENTRY LINK */}
+            <Pressable
+              style={styles.adminEntryLink}
+              onPress={() => router.push("/(auth)/sign-in?mode=admin" as any)}
+            >
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={14}
+                color={theme.colors.textSecondary}
+              />
+              <Text style={styles.adminEntryText}>
+                App Owner & Admin Access
+              </Text>
+            </Pressable>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -336,5 +351,19 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     color: theme.colors.textSecondary,
     fontWeight: "500",
+  },
+  adminEntryLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 18,
+    paddingVertical: 8,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  adminEntryText: {
+    fontSize: 12.5,
+    color: theme.colors.textSecondary,
+    fontWeight: "600",
   },
 });

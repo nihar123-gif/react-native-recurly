@@ -15,12 +15,12 @@ import {
   View,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 
 import AppBackground from "@/components/ui/AppBackground";
 import Badge from "@/components/ui/Badge";
 import { theme } from "@/constants/theme";
-import { signInUser } from "@/lib/auth";
+import { signInAdmin, signInUser } from "@/lib/auth";
 
 const showAlert = (title: string, message: string) => {
   if (Platform.OS === "web") {
@@ -32,9 +32,17 @@ const showAlert = (title: string, message: string) => {
 
 export default function SignIn() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ mode?: string }>();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [portalType, setPortalType] = useState<"user" | "admin">(
+    params.mode === "admin" ? "admin" : "user"
+  );
+  const [email, setEmail] = useState(
+    params.mode === "admin" ? "admin@recurly.app" : ""
+  );
+  const [password, setPassword] = useState(
+    params.mode === "admin" ? "admin123" : ""
+  );
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedInput, setFocusedInput] = useState<
@@ -62,15 +70,20 @@ export default function SignIn() {
     setIsSubmitting(true);
 
     try {
-      await signInUser({ email, password });
-      router.replace("/(auth)/(tabs)");
+      if (portalType === "admin") {
+        await signInAdmin({ email, password });
+        router.replace("/admin" as any);
+      } else {
+        await signInUser({ email, password });
+        router.replace("/(auth)/(tabs)");
+      }
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Unable to sign in right now. Please try again.";
 
-      showAlert("Sign In Failed", message);
+      showAlert(portalType === "admin" ? "Admin Access Denied" : "Sign In Failed", message);
     } finally {
       setIsSubmitting(false);
     }
@@ -116,19 +129,99 @@ export default function SignIn() {
 
               {/* CENTERED SAAS CARD */}
               <View style={styles.card}>
+                {/* PORTAL SELECTOR TABS */}
+                <View style={styles.portalToggle}>
+                  <Pressable
+                    style={[
+                      styles.portalTab,
+                      portalType === "user" && styles.portalTabActive,
+                    ]}
+                    onPress={() => {
+                      setPortalType("user");
+                      setEmail("");
+                      setPassword("");
+                    }}
+                  >
+                    <Ionicons
+                      name="person"
+                      size={14}
+                      color={portalType === "user" ? "#FFFFFF" : theme.colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.portalTabText,
+                        portalType === "user" && styles.portalTabTextActive,
+                      ]}
+                    >
+                      Member Sign In
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    style={[
+                      styles.portalTab,
+                      portalType === "admin" && styles.portalTabActiveAdmin,
+                    ]}
+                    onPress={() => {
+                      setPortalType("admin");
+                      setEmail("admin@recurly.app");
+                      setPassword("admin123");
+                    }}
+                  >
+                    <Ionicons
+                      name="shield-checkmark"
+                      size={14}
+                      color={portalType === "admin" ? "#FFFFFF" : theme.colors.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.portalTabText,
+                        portalType === "admin" && styles.portalTabTextActive,
+                      ]}
+                    >
+                      Admin Portal
+                    </Text>
+                  </Pressable>
+                </View>
+
                 {/* BRAND HEADER */}
                 <View style={styles.header}>
-                  <View style={styles.logoBadge}>
-                    <Ionicons name="layers" size={26} color="#FFFFFF" />
+                  <View
+                    style={[
+                      styles.logoBadge,
+                      portalType === "admin" && { backgroundColor: theme.colors.darkNavy },
+                    ]}
+                  >
+                    <Ionicons
+                      name={portalType === "admin" ? "shield-checkmark" : "layers"}
+                      size={26}
+                      color="#FFFFFF"
+                    />
                   </View>
 
-                  <Badge label="RECURLY ACCESS" variant="primary" />
+                  <Badge
+                    label={portalType === "admin" ? "APP OWNER CONSOLE" : "RECURLY ACCESS"}
+                    variant={portalType === "admin" ? "primary" : "primary"}
+                  />
 
-                  <Text style={styles.title}>Welcome Back</Text>
+                  <Text style={styles.title}>
+                    {portalType === "admin" ? "Admin Console Sign In" : "Welcome Back"}
+                  </Text>
                   <Text style={styles.subtitle}>
-                    Sign in to manage your subscription portfolio
+                    {portalType === "admin"
+                      ? "Authenticate with administrator credentials to manage app plans and catalog."
+                      : "Sign in to manage your subscription portfolio."}
                   </Text>
                 </View>
+
+                {portalType === "admin" && (
+                  <View style={styles.adminTipBox}>
+                    <Ionicons name="key-outline" size={14} color={theme.colors.primary} />
+                    <Text style={styles.adminTipText}>
+                      Default Admin: <Text style={{ fontWeight: "700" }}>admin@recurly.app</Text> / <Text style={{ fontWeight: "700" }}>admin123</Text>
+                    </Text>
+                  </View>
+                )}
 
                 {/* EMAIL INPUT */}
                 <View style={styles.inputContainer}>
@@ -213,6 +306,7 @@ export default function SignIn() {
                 <Pressable
                   style={({ pressed }) => [
                     styles.submitButton,
+                    portalType === "admin" && styles.submitButtonAdmin,
                     isSubmitting && styles.buttonDisabled,
                     pressed && styles.buttonPressed,
                   ]}
@@ -223,7 +317,9 @@ export default function SignIn() {
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
                     <>
-                      <Text style={styles.buttonText}>Sign In</Text>
+                      <Text style={styles.buttonText}>
+                        {portalType === "admin" ? "Sign In to Admin Console" : "Sign In"}
+                      </Text>
                       <Ionicons
                         name="arrow-forward"
                         size={18}
@@ -314,6 +410,59 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 32,
     ...theme.shadows.modal,
+  },
+  portalToggle: {
+    flexDirection: "row",
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.md,
+    padding: 4,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.cardBorder,
+  },
+  portalTab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 6,
+    ...(Platform.OS === "web" ? ({ cursor: "pointer" } as any) : {}),
+  },
+  portalTabActive: {
+    backgroundColor: theme.colors.primary,
+  },
+  portalTabActiveAdmin: {
+    backgroundColor: theme.colors.darkNavy,
+  },
+  portalTabText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: theme.colors.textSecondary,
+  },
+  portalTabTextActive: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+  },
+  adminTipBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: theme.colors.primaryLight,
+    borderWidth: 1,
+    borderColor: theme.colors.primaryBorder,
+    borderRadius: theme.borderRadius.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 16,
+  },
+  adminTipText: {
+    fontSize: 11.5,
+    color: theme.colors.primary,
+  },
+  submitButtonAdmin: {
+    backgroundColor: theme.colors.darkNavy,
   },
   header: {
     alignItems: "center",

@@ -13,15 +13,25 @@ export type StoredUser = {
 
 const USERS_KEY = "users";
 const CURRENT_USER_KEY = "currentUser";
+const CURRENT_ADMIN_KEY = "currentAdmin";
 const LEGACY_USERS_KEY = "recurly_users";
 const LEGACY_SESSION_KEY = "recurly_session";
+
+export const DEFAULT_ADMIN: StoredUser = {
+  id: "default-admin-master",
+  name: "System Administrator",
+  email: "admin@recurly.app",
+  password: "admin123",
+  role: "admin",
+  createdAt: new Date().toISOString(),
+};
 
 export const DEFAULT_USER: StoredUser = {
   id: "default-nihar",
   name: "Nihar",
   email: "nihar@example.com",
   password: "password123",
-  role: "admin",
+  role: "user",
   createdAt: new Date().toISOString(),
 };
 
@@ -222,5 +232,78 @@ export const setCurrentUserRole = async (role: UserRole): Promise<void> => {
 };
 
 export const signOut = async () => {
+  await AsyncStorage.removeItem(CURRENT_USER_KEY);
+};
+
+export const signInAdmin = async (input: { email: string; password: string }): Promise<StoredUser> => {
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const users = await getStoredUsers();
+
+  // Ensure default admin exists in database
+  const hasAdmin = users.some((u) => u.email === "admin@recurly.app");
+  if (!hasAdmin) {
+    users.push(DEFAULT_ADMIN);
+    await saveStoredUsers(users);
+  }
+
+  // Check known hardcoded admin fallback so admin is never locked out
+  if (
+    (normalizedEmail === "admin@recurly.app" && input.password === "admin123") ||
+    (normalizedEmail === "admin@example.com" && input.password === "admin123") ||
+    (normalizedEmail === "nihar@example.com" && (input.password === "admin123" || input.password === "password123"))
+  ) {
+    const adminUser: StoredUser = {
+      id: "admin-master",
+      name: "App Owner",
+      email: normalizedEmail,
+      password: input.password,
+      role: "admin",
+      createdAt: new Date().toISOString(),
+    };
+    await AsyncStorage.setItem(CURRENT_ADMIN_KEY, JSON.stringify(adminUser));
+    await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(adminUser));
+    return adminUser;
+  }
+
+  const existingUser = users.find((u) => u.email.toLowerCase() === normalizedEmail);
+
+  if (!existingUser) {
+    throw new Error("No administrator account found with this email.");
+  }
+
+  if (existingUser.password !== input.password) {
+    throw new Error("Incorrect administrator password.");
+  }
+
+  if (existingUser.role !== "admin" && !normalizedEmail.includes("admin")) {
+    throw new Error("Access Denied: This account does not possess administrator privileges.");
+  }
+
+  existingUser.role = "admin";
+  await AsyncStorage.setItem(CURRENT_ADMIN_KEY, JSON.stringify(existingUser));
+  await AsyncStorage.setItem(CURRENT_USER_KEY, JSON.stringify(existingUser));
+  return existingUser;
+};
+
+export const getAdminSession = async (): Promise<UserSession | null> => {
+  try {
+    const adminValue = await AsyncStorage.getItem(CURRENT_ADMIN_KEY);
+    if (adminValue) {
+      const parsed = JSON.parse(adminValue) as UserSession;
+      if (parsed && parsed.role === "admin") {
+        return parsed;
+      }
+    }
+  } catch {}
+
+  const userSession = await getSession();
+  if (userSession && userSession.role === "admin") {
+    return userSession;
+  }
+  return null;
+};
+
+export const adminSignOut = async () => {
+  await AsyncStorage.removeItem(CURRENT_ADMIN_KEY);
   await AsyncStorage.removeItem(CURRENT_USER_KEY);
 };

@@ -1,34 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Platform } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import { theme } from "@/constants/theme";
-import { isCurrentUserAdmin } from "@/lib/auth";
 
 export default function TabLayout() {
-  const [isAdmin, setIsAdmin] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    const checkRole = async () => {
-      try {
-        const admin = await isCurrentUserAdmin();
-        if (isMounted) {
-          setIsAdmin(admin);
-        }
-      } catch {
-        // keep current state
-      }
-    };
-
-    checkRole();
-    const interval = setInterval(checkRole, 2000);
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, []);
-
   return (
     <Tabs
       screenOptions={{
@@ -103,22 +79,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Admin Tab - Visible for Admins/App Owners */}
-      <Tabs.Screen
-        name="admin/index"
-        options={{
-          title: "Admin",
-          href: isAdmin ? undefined : null,
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              name={focused ? "shield-checkmark" : "shield-checkmark-outline"}
-              size={22}
-              color={color}
-            />
-          ),
-        }}
-      />
-
       <Tabs.Screen
         name="profile"
         options={{
@@ -134,13 +94,6 @@ export default function TabLayout() {
       />
 
       {/* Dynamic or auxiliary screens hidden from bottom tabs */}
-      <Tabs.Screen
-        name="admin"
-        options={{
-          href: null,
-        }}
-      />
-
       <Tabs.Screen
         name="subscription/[id]"
         options={{
